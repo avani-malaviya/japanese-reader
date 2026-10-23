@@ -27,3 +27,24 @@ class ReadingOut(BaseModel):
 class ReadingResponse(BaseModel):
     text: str
     readings: list[ReadingOut]
+
+
+class MeaningRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=MAX_LOOKUP_CHARS)
+
+
+class SenseOut(BaseModel):
+    pos: list[str]
+    glosses: list[str]
+
+
+class EntryOut(BaseModel):
+    headword: str
+    readings: list[str]
+    senses: list[SenseOut]
+
+
+class MeaningResponse(BaseModel):
+    text: str
+    looked_up: str
+    entries: list[EntryOut]

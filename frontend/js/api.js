@@ -26,6 +26,10 @@ export function getReadings({ text, context, offset }) {
   return postJson("/reading", { text, context, offset });
 }
 
+export function getMeaning(text) {
+  return postJson("/meaning", { text });
+}
+
 export function ocrImage(file) {
   const body = new FormData();
   body.append("image", file);

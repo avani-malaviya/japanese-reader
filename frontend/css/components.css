@@ -228,3 +228,41 @@
   font-size: var(--rt-size);
   user-select: none;
 }
+
+.btn[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+/* ---- meaning ---- */
+.meaning {
+  border-top: var(--border);
+}
+
+.meaning__note {
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.meaning__head {
+  margin-top: var(--space-2);
+}
+
+.meaning__word {
+  font-family: var(--font-doc);
+  font-size: var(--popup-kana-size);
+}
+
+.meaning__reading {
+  font-family: var(--font-doc);
+}
+
+.meaning__senses {
+  margin: var(--space-1) 0 0;
+  padding-left: 2em;
+  line-height: 1.5;
+}
+
+.meaning__pos {
+  color: var(--muted);
+}

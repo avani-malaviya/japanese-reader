@@ -1,18 +1,13 @@
 // The box that appears beside highlighted text: readings, and actions on them.
 
-import { getReadings } from "../api.js";
+import { getMeaning, getReadings } from "../api.js";
 import { FURIGANA_OCCURRENCES, POPUP_GAP } from "../config.js";
 import { insertFurigana, removeFurigana } from "../editor/furigana.js";
 import { getSelectionInfo } from "../editor/selection.js";
+import { el } from "./dom.js";
+import { renderMeaning } from "./meaning-view.js";
 
 const GROUP_LABELS = { word: "読み READING", on: "音 ON", kun: "訓 KUN" };
-
-function el(tag, className, text) {
-  const node = document.createElement(tag);
-  if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
-  return node;
-}
 
 export function setupLookupPopup({ editor, scroller, status }) {
   const popup = el("div", "popup");
@@ -20,7 +15,8 @@ export function setupLookupPopup({ editor, scroller, status }) {
   popup.setAttribute("role", "dialog");
   document.body.append(popup);
 
-  let current = null; // { info, readings, chosen }
+  // { info, ruby, readings, chosen, meaning: null | "loading" | response }
+  let current = null;
   let requestId = 0;
 
   function close() {
@@ -81,7 +77,34 @@ export function setupLookupPopup({ editor, scroller, status }) {
       }
       body.append(list);
     }
-    render(body, renderActions());
+    render(body, ...renderMeaningSection(), renderActions());
+  }
+
+  function renderMeaningSection() {
+    if (current.meaning === "loading") return [el("div", "popup__body popup__loading", "LOOKING UP…")];
+    if (current.meaning) return [renderMeaning(current.meaning)];
+    return [];
+  }
+
+  async function onMeaning() {
+    if (current.meaning) {
+      current.meaning = null; // toggle off
+      return renderReadings();
+    }
+    const id = requestId;
+    current.meaning = "loading";
+    renderReadings();
+    try {
+      const meaning = await getMeaning(current.info.text);
+      if (id !== requestId) return;
+      current.meaning = meaning;
+      renderReadings();
+    } catch (error) {
+      if (id !== requestId) return;
+      current.meaning = null;
+      renderReadings();
+      status.set(`Error: ${error.message}`);
+    }
   }
 
   function renderActions() {
@@ -93,7 +116,9 @@ export function setupLookupPopup({ editor, scroller, status }) {
     );
     // Furigana that just repeats kana text adds nothing.
     insert.disabled = !current.chosen || current.chosen.kana === current.info.text;
-    actions.append(insert);
+    const meaning = actionButton("Meaning", "Look up the dictionary meaning", onMeaning);
+    meaning.setAttribute("aria-pressed", String(Boolean(current.meaning)));
+    actions.append(insert, meaning);
 
     if (current.ruby) {
       actions.append(
@@ -141,7 +166,7 @@ export function setupLookupPopup({ editor, scroller, status }) {
 
   async function open(info, ruby = null) {
     const id = ++requestId;
-    current = { info, ruby, readings: [], chosen: null };
+    current = { info, ruby, readings: [], chosen: null, meaning: null };
     render(el("div", "popup__body popup__loading", "LOOKING UP…"));
     try {
       const { readings } = await getReadings(info);

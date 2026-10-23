@@ -14,6 +14,7 @@ class Token:
     start: int
     end: int
     reading: str  # hiragana
+    lemma: str  # dictionary form, e.g. 食べ → 食べる
 
 
 _lock = threading.Lock()
@@ -36,7 +37,9 @@ def tokenize(text: str) -> list[Token]:
         start = text.index(word.surface, position)
         end = start + len(word.surface)
         kana = getattr(word.feature, "kana", None)
-        tokens.append(Token(word.surface, start, end, to_hiragana(kana or word.surface)))
+        # UniDic tags loanword lemmas with their origin, e.g. "コーヒー-coffee".
+        lemma = (getattr(word.feature, "lemma", None) or word.surface).split("-")[0]
+        tokens.append(Token(word.surface, start, end, to_hiragana(kana or word.surface), lemma))
         position = end
     return tokens
 
