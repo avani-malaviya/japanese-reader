@@ -8,6 +8,7 @@ dependencies = [
     "uvicorn[standard]>=0.32",
     "python-multipart>=0.0.12",
     "pillow>=13.0.0",
+    "mokuro>=0.2.5",
 ]
 
 [dependency-groups]

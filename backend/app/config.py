@@ -5,3 +5,5 @@ FRONTEND_DIR = BACKEND_DIR.parent / "frontend"
 
 APP_NAME = "Japanese Reader"
 APP_VERSION = "0.1.0"
+
+MAX_UPLOAD_BYTES = 20 * 1024 * 1024
