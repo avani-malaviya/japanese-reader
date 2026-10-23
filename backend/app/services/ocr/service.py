@@ -1,9 +1,13 @@
 import io
 
 from PIL import Image, ImageOps, UnidentifiedImageError
+from pillow_heif import register_heif_opener
 
 from app.services.ocr.base import OcrEngine, OcrResult
 from app.services.ocr.layout import to_result
+
+# iPhone photos are HEIC by default; teach Pillow to open them.
+register_heif_opener()
 
 
 class InvalidImageError(ValueError):

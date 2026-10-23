@@ -13,6 +13,7 @@ dependencies = [
     "unidic-lite>=1.0.8",
     "jamdict>=0.1a11.post2",
     "jamdict-data>=1.5",
+    "pillow-heif>=1.8.1",
 ]
 
 [dependency-groups]

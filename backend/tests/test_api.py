@@ -24,9 +24,9 @@ def client() -> TestClient:
     return TestClient(app)
 
 
-def png_bytes() -> bytes:
+def image_bytes(format: str = "PNG") -> bytes:
     buffer = io.BytesIO()
-    Image.new("RGB", (20, 20), "white").save(buffer, format="PNG")
+    Image.new("RGB", (20, 20), "white").save(buffer, format=format)
     return buffer.getvalue()
 
 
@@ -43,9 +43,14 @@ def test_serves_frontend(client: TestClient) -> None:
 
 
 def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
-    response = client.post("/api/ocr", files={"image": ("page.png", png_bytes(), "image/png")})
+    response = client.post("/api/ocr", files={"image": ("page.png", image_bytes(), "image/png")})
     assert response.status_code == 200
     assert response.json() == {"paragraphs": ["一番目", "二番目"], "text": "一番目\n\n二番目"}
+
+
+def test_ocr_accepts_heic(client: TestClient) -> None:
+    files = {"image": ("photo.heic", image_bytes("HEIF"), "image/heic")}
+    assert client.post("/api/ocr", files=files).status_code == 200
 
 
 def test_reading_marks_contextual_reading(client: TestClient) -> None:
