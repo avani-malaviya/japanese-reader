@@ -48,6 +48,17 @@ def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
     assert response.json() == {"paragraphs": ["一番目", "二番目"], "text": "一番目\n\n二番目"}
 
 
+def test_reading_marks_contextual_reading(client: TestClient) -> None:
+    response = client.post("/api/reading", json={"text": "今日", "context": "今日は", "offset": 0})
+    assert response.status_code == 200
+    readings = response.json()["readings"]
+    assert {"kana": "きょう", "label": "きょう", "kind": "word", "contextual": True} in readings
+
+
+def test_reading_rejects_empty_text(client: TestClient) -> None:
+    assert client.post("/api/reading", json={"text": ""}).status_code == 422
+
+
 def test_ocr_rejects_non_image(client: TestClient) -> None:
     response = client.post("/api/ocr", files={"image": ("notes.txt", b"hello", "text/plain")})
     assert response.status_code == 400

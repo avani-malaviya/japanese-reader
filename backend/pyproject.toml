@@ -9,6 +9,10 @@ dependencies = [
     "python-multipart>=0.0.12",
     "pillow>=13.0.0",
     "mokuro>=0.2.5",
+    "fugashi>=1.5.2",
+    "unidic-lite>=1.0.8",
+    "jamdict>=0.1a11.post2",
+    "jamdict-data>=1.5",
 ]
 
 [dependency-groups]
