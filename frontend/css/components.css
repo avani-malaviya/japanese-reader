@@ -88,6 +88,10 @@
   word-break: break-all;
 }
 
+.page p {
+  margin: 0 0 1em;
+}
+
 .page:focus {
   outline: none;
 }
