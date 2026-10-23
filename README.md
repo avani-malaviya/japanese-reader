@@ -1,0 +1,129 @@
+# Japanese Reader
+
+Read real Japanese — pamphlets, book pages, signs — **with assistance instead of translation**.
+
+Take a photo of a page, get it back as an editable typed document, and look things up only
+when you need to: highlight a word or kanji to see its reading (yomikata), stamp furigana
+under its next few occurrences, or peek at its dictionary meaning.
+
+Everything runs locally and uses only open-source models and open data.
+
+---
+
+## Status
+
+**v0 — in progress.** See [Roadmap](#roadmap).
+
+## Features (v0)
+
+| Feature | What it does |
+|---|---|
+| **Open image** | Upload a photo/scan from your computer. |
+| **OCR** | Detects text blocks (vertical *or* horizontal) and recognises them. Vertical text is converted to horizontal so every document reads the same way. |
+| **Editor** | The OCR result lands in a simple word-processor page. Fix mistakes, delete noise, type freely. Autosaved in the browser. |
+| **Reading** | Highlight text → a box appears beside it with the reading in hiragana. A single kanji shows *all* its readings (音 / 訓); a word shows its reading in context first, then alternatives. |
+| **Insert** | Adds the chosen reading as furigana *below* the selected text and its next occurrences (5 in total). |
+| **Meaning** | Shows dictionary entries (part of speech + glosses) for the selection. Word-level only — no sentence translation, on purpose. |
+
+## Architecture
+
+```
+ Browser (vanilla JS, no build)                    Python backend (FastAPI, localhost:8000)
+ ┌──────────────────────────────┐                 ┌───────────────────────────────────────────┐
+ │ ui/upload.js ──────────────┐ │   POST /api/ocr │ api/ocr.py ──► services/ocr/              │
+ │ ui/lookup-popup.js ──────┐ │ │ ───────────────►│                 base.py     (interfaces)  │
+ │ editor/editor.js         │ │ │                 │                 mokuro_engine.py          │
+ │ editor/furigana.js       │ │ │                 │                   comic-text-detector     │
+ │                          ▼ ▼ │                 │                   + manga-ocr             │
+ │                     js/api.js│ POST /api/reading│                 layout.py   (reading order)│
+ │                              │ ───────────────►│ api/lookup.py ─► services/reading.py      │
+ │                              │ POST /api/meaning│                   fugashi + UniDic        │
+ │                              │ ───────────────►│                   KANJIDIC2               │
+ │                              │                 │                 services/dictionary.py    │
+ │  static files served by ◄────┼─────────────────│                   JMdict (jamdict)        │
+ └──────────────────────────────┘                 └───────────────────────────────────────────┘
+```
+
+**Layering**
+
+- `backend/app/api/` — HTTP only: routing, request/response schemas, error mapping.
+- `backend/app/services/` — domain logic. Knows nothing about HTTP. Each external model or
+  dataset sits behind a small interface so it can be swapped (e.g. a different OCR engine).
+- `frontend/js/api.js` — the *only* place the frontend talks to the backend.
+- `frontend/js/editor/` — the document: content, furigana, persistence.
+- `frontend/js/ui/` — chrome around the document: toolbar, popups, status bar.
+
+Dependencies point inward: `api → services`, `ui → editor`, `ui/editor → api.js`. Never the reverse.
+
+### Models & data (all open)
+
+| Purpose | Component | License |
+|---|---|---|
+| Text detection | [comic-text-detector](https://github.com/dmMaze/comic-text-detector) (via [mokuro](https://github.com/kha-white/mokuro)) | GPL-3.0 |
+| Line OCR | [manga-ocr](https://github.com/kha-white/manga-ocr) (`kha-white/manga-ocr-base`) | Apache-2.0 |
+| Contextual reading | [fugashi](https://github.com/polm/fugashi) (MeCab) + UniDic | MIT / BSD |
+| Kanji readings | [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) | CC BY-SA 4.0 |
+| Meanings | [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html) via [jamdict](https://github.com/neocl/jamdict) | CC BY-SA 4.0 / MIT |
+
+Why these: see [docs/decisions/](docs/decisions/).
+
+## Repository layout
+
+```
+README.md               this file — design, plan, how to run
+docs/DESIGN_RULES.md    visual + code rules every change should follow
+docs/decisions/         short architecture decision records (ADRs)
+backend/                FastAPI app, services, tests (uv project)
+frontend/               static HTML/CSS/JS served by the backend
+```
+
+## Running locally ("deployment")
+
+The app is a single local process: the backend serves both the API and the frontend.
+
+**Requirements:** macOS/Linux, ~3 GB free disk (PyTorch + models), internet for the first run only.
+
+```sh
+# 1. one-time: install uv (Python package/runtime manager)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# 2. install dependencies (uv fetches Python 3.12 automatically)
+cd backend
+uv sync
+
+# 3. run
+uv run uvicorn app.main:app --reload --port 8000
+
+# 4. open
+open http://localhost:8000
+```
+
+The first OCR request downloads the detector and manga-ocr weights (~450 MB) to the
+Hugging Face / local cache; after that the app works fully offline.
+
+**Tests:** `cd backend && uv run pytest`
+
+## Roadmap
+
+**v0 (now)** — commits land roughly in this order:
+
+1. Repo, README, design rules, ADRs
+2. Backend scaffold (FastAPI, health endpoint, static hosting)
+3. Frontend shell in the B/W retro style
+4. OCR interfaces + reading-order layout
+5. OCR engine (detector + manga-ocr) and `/api/ocr`
+6. Upload image → text in editor
+7. Editable document with autosave
+8. Reading service and `/api/reading`
+9. Selection popup with readings
+10. Insert furigana under the next 5 occurrences
+11. Meaning lookup and `/api/meaning`
+
+**Later ideas**
+
+- Show the source image side-by-side, click a paragraph to see its crop
+- Save multiple documents (SQLite), library screen
+- Vocabulary list from looked-up words, export to Anki
+- Context-aware explanation with a local open-weight LLM (e.g. via Ollama)
+- Book-page-tuned OCR engine (e.g. NDLOCR) as an alternative to the manga detector
+- Vertical reading mode (`writing-mode: vertical-rl`) as a view option
