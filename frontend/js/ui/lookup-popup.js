@@ -1,7 +1,8 @@
 // The box that appears beside highlighted text: readings, and actions on them.
 
 import { getReadings } from "../api.js";
-import { POPUP_GAP } from "../config.js";
+import { FURIGANA_OCCURRENCES, POPUP_GAP } from "../config.js";
+import { insertFurigana } from "../editor/furigana.js";
 import { getSelectionInfo } from "../editor/selection.js";
 
 const GROUP_LABELS = { word: "読み READING", on: "音 ON", kun: "訓 KUN" };
@@ -46,7 +47,7 @@ export function setupLookupPopup({ editor, scroller, status }) {
     popup.style.top = `${top}px`;
   }
 
-  function render(body) {
+  function render(...sections) {
     const header = el("div", "popup__title");
     header.append(el("span", "popup__word", current.info.text));
     const closeButton = el("button", "popup__close", "×");
@@ -55,7 +56,7 @@ export function setupLookupPopup({ editor, scroller, status }) {
     closeButton.addEventListener("click", close);
     header.append(closeButton);
 
-    popup.replaceChildren(header, body);
+    popup.replaceChildren(header, ...sections);
     popup.hidden = false;
     place(current.info.rect);
   }
@@ -80,7 +81,37 @@ export function setupLookupPopup({ editor, scroller, status }) {
       }
       body.append(list);
     }
-    render(body);
+    render(body, renderActions());
+  }
+
+  function renderActions() {
+    const actions = el("div", "popup__actions");
+    const insert = el("button", "btn", "Insert");
+    insert.type = "button";
+    insert.title = `Add this reading under the next ${FURIGANA_OCCURRENCES} occurrences`;
+    // Furigana that just repeats kana text adds nothing.
+    insert.disabled = !current.chosen || current.chosen.kana === current.info.text;
+    insert.addEventListener("click", onInsert);
+    actions.append(insert);
+    return actions;
+  }
+
+  function onInsert() {
+    const { info, chosen } = current;
+    const added = insertFurigana(editor.el, {
+      text: info.text,
+      kana: chosen.kana,
+      from: info.range,
+      count: FURIGANA_OCCURRENCES,
+    });
+    editor.changed();
+    close();
+    window.getSelection().removeAllRanges();
+    status.set(
+      added
+        ? `Added ${chosen.kana} to ${added} × ${info.text}`
+        : `${info.text} already has furigana`,
+    );
   }
 
   async function open(info) {

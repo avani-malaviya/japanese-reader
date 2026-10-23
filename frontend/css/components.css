@@ -211,3 +211,20 @@
 .popup__tag {
   font-size: var(--ui-size);
 }
+
+.popup__actions {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-top: var(--border);
+}
+
+/* ---- furigana ---- */
+.page ruby {
+  ruby-position: under;
+}
+
+.page rt {
+  font-size: var(--rt-size);
+  user-select: none;
+}

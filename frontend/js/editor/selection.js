@@ -23,7 +23,7 @@ export function plainText(block) {
 
 /**
  * The current selection inside `root`, or null if there is nothing usable.
- * Returns { text, context, offset, paragraph, rect }: `context` is the paragraph's
+ * Returns { text, context, offset, paragraph, range, rect }: `context` is the paragraph's
  * plain text and `offset` is where `text` starts in it.
  */
 export function getSelectionInfo(root) {
@@ -46,5 +46,12 @@ export function getSelectionInfo(root) {
   if (!text || text.length > MAX_LOOKUP_CHARS) return null;
   const offset = start + raw.indexOf(text);
 
-  return { text, context, offset, paragraph, rect: range.getBoundingClientRect() };
+  return {
+    text,
+    context,
+    offset,
+    paragraph,
+    range: range.cloneRange(),
+    rect: range.getBoundingClientRect(),
+  };
 }
