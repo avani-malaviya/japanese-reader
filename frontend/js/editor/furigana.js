@@ -49,3 +49,30 @@ export function insertFurigana(root, { text, kana, from, count }) {
   }
   return targets.length;
 }
+
+function unwrap(ruby) {
+  ruby.querySelectorAll("rt").forEach((rt) => rt.remove());
+  ruby.replaceWith(...ruby.childNodes);
+}
+
+export function baseText(ruby) {
+  const clone = ruby.cloneNode(true);
+  clone.querySelectorAll("rt").forEach((rt) => rt.remove());
+  return clone.textContent;
+}
+
+function readingOf(ruby) {
+  return ruby.querySelector("rt")?.textContent ?? "";
+}
+
+/** Removes furigana from `ruby`, or with `everywhere`, from every same word + reading. */
+export function removeFurigana(root, ruby, { everywhere = false } = {}) {
+  const matches = everywhere
+    ? [...root.querySelectorAll("ruby")].filter(
+        (other) => baseText(other) === baseText(ruby) && readingOf(other) === readingOf(ruby),
+      )
+    : [ruby];
+  matches.forEach(unwrap);
+  root.normalize();
+  return matches.length;
+}

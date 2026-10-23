@@ -2,7 +2,7 @@
 
 import { getReadings } from "../api.js";
 import { FURIGANA_OCCURRENCES, POPUP_GAP } from "../config.js";
-import { insertFurigana } from "../editor/furigana.js";
+import { insertFurigana, removeFurigana } from "../editor/furigana.js";
 import { getSelectionInfo } from "../editor/selection.js";
 
 const GROUP_LABELS = { word: "読み READING", on: "音 ON", kun: "訓 KUN" };
@@ -86,14 +86,39 @@ export function setupLookupPopup({ editor, scroller, status }) {
 
   function renderActions() {
     const actions = el("div", "popup__actions");
-    const insert = el("button", "btn", "Insert");
-    insert.type = "button";
-    insert.title = `Add this reading under the next ${FURIGANA_OCCURRENCES} occurrences`;
+    const insert = actionButton(
+      "Insert",
+      `Add this reading under the next ${FURIGANA_OCCURRENCES} occurrences`,
+      onInsert,
+    );
     // Furigana that just repeats kana text adds nothing.
     insert.disabled = !current.chosen || current.chosen.kana === current.info.text;
-    insert.addEventListener("click", onInsert);
     actions.append(insert);
+
+    if (current.ruby) {
+      actions.append(
+        actionButton("Remove", "Remove this furigana", () => onRemove(false)),
+        actionButton("Remove all", "Remove this reading from every occurrence", () => onRemove(true)),
+      );
+    }
     return actions;
+  }
+
+  function actionButton(label, title, onClick) {
+    const button = el("button", "btn", label);
+    button.type = "button";
+    button.title = title;
+    button.addEventListener("click", onClick);
+    return button;
+  }
+
+  function onRemove(everywhere) {
+    const text = current.info.text;
+    const removed = removeFurigana(editor.el, current.ruby, { everywhere });
+    editor.changed();
+    close();
+    window.getSelection().removeAllRanges();
+    status.set(`Removed furigana from ${removed} × ${text}`);
   }
 
   function onInsert() {
@@ -114,9 +139,9 @@ export function setupLookupPopup({ editor, scroller, status }) {
     );
   }
 
-  async function open(info) {
+  async function open(info, ruby = null) {
     const id = ++requestId;
-    current = { info, readings: [], chosen: null };
+    current = { info, ruby, readings: [], chosen: null };
     render(el("div", "popup__body popup__loading", "LOOKING UP…"));
     try {
       const { readings } = await getReadings(info);
@@ -136,7 +161,19 @@ export function setupLookupPopup({ editor, scroller, status }) {
     if (info) open(info);
   }
 
-  editor.el.addEventListener("mouseup", () => setTimeout(onSelectionDone));
+  // A plain click on furigana selects its word and opens the popup with Remove options.
+  function onClick(event) {
+    const ruby = event.target.closest("ruby");
+    if (!ruby || !window.getSelection().isCollapsed) return onSelectionDone();
+    const range = document.createRange();
+    range.selectNodeContents(ruby);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    const info = getSelectionInfo(editor.el);
+    if (info) open(info, ruby);
+  }
+
+  editor.el.addEventListener("mouseup", (event) => setTimeout(() => onClick(event)));
   editor.el.addEventListener("keyup", (event) => {
     if (event.shiftKey) onSelectionDone();
   });
