@@ -11,7 +11,9 @@ plain utilitarian chrome around it.
 ### Colour
 - Only `--ink` (`#000`) and `--paper` (`#fff`). One grey, `--muted` (`#808080`), for disabled
   or secondary text only.
-- No other colours, no gradients, no transparency effects, no blur.
+- No other colours, no smooth gradients, no transparency effects, no blur.
+- 1-bit patterns are fine (striped title bar, dithered desktop) — built with hard-stop CSS
+  gradients so they stay pure black and white.
 - Emphasis = **inversion** (white on black), never colour. Hover, active, selected, focused all invert.
 
 ### Shape

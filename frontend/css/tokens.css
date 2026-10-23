@@ -1,0 +1,27 @@
+/* The only place colours, fonts and sizes are defined. See docs/DESIGN_RULES.md. */
+:root {
+  --ink: #000;
+  --paper: #fff;
+  --muted: #808080;
+
+  --font-ui: "Osaka-Mono", "MS Gothic", Menlo, Monaco, "Courier New", monospace;
+  --font-doc: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "MS Mincho", serif;
+
+  --ui-size: 12px;
+  --doc-size: 22px;
+  --doc-line-height: 2.4;
+  --rt-size: 0.5em;
+
+  --border: 1px solid var(--ink);
+  --frame: 3px double var(--ink);
+  --hard-shadow: 3px 3px 0 var(--ink);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 32px;
+  --space-5: 64px;
+
+  --page-width: 40em;
+  --bar-height: 24px;
+}

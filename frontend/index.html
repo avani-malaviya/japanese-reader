@@ -4,8 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Japanese Reader</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
-  <p>Japanese Reader</p>
+  <div class="window">
+    <header class="titlebar">
+      <span class="titlebar__title">Japanese Reader v0.1</span>
+    </header>
+
+    <nav class="toolbar">
+      <button class="btn" id="open-image" type="button">Open Image…</button>
+    </nav>
+
+    <main class="workspace">
+      <article class="page" id="document" lang="ja"
+               data-placeholder="Open an image to begin."></article>
+    </main>
+
+    <footer class="statusbar">
+      <span id="status-message">Ready</span>
+      <span id="status-count">0 chars</span>
+    </footer>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
 </body>
 </html>

@@ -1,0 +1,112 @@
+/* ---- window ---- */
+.window {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  border: var(--frame);
+}
+
+/* Classic striped title bar: a 1-bit pattern, not a smooth gradient. */
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--bar-height);
+  padding: 0 var(--space-2);
+  border-bottom: var(--border);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--ink) 0 1px,
+    var(--paper) 1px 3px
+  );
+}
+
+.titlebar__title {
+  margin: 0 auto;
+  padding: 0 var(--space-2);
+  background: var(--paper);
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+/* ---- toolbar ---- */
+.toolbar {
+  display: flex;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: var(--border);
+}
+
+.btn {
+  padding: 2px var(--space-2);
+  border: var(--border);
+  background: var(--paper);
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.btn::before { content: "[ "; }
+.btn::after { content: " ]"; }
+
+.btn:hover,
+.btn:active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn:disabled {
+  color: var(--muted);
+  border-color: var(--muted);
+  background: var(--paper);
+  cursor: default;
+}
+
+/* ---- workspace + page ---- */
+/* 1-bit dither behind the page, like an old desktop. */
+.workspace {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-3);
+  background-color: var(--paper);
+  background-image: repeating-conic-gradient(var(--ink) 0 25%, var(--paper) 0 50%);
+  background-size: 4px 4px;
+}
+
+.page {
+  max-width: var(--page-width);
+  min-height: 100%;
+  margin: 0 auto;
+  padding: var(--space-5);
+  border: var(--border);
+  background: var(--paper);
+  box-shadow: var(--hard-shadow);
+  font-family: var(--font-doc);
+  font-size: var(--doc-size);
+  line-height: var(--doc-line-height);
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.page:focus {
+  outline: none;
+}
+
+.page:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: var(--ui-size);
+  text-transform: uppercase;
+}
+
+/* ---- status bar ---- */
+.statusbar {
+  display: flex;
+  justify-content: space-between;
+  height: var(--bar-height);
+  padding: 0 var(--space-2);
+  align-items: center;
+  border-top: var(--border);
+  text-transform: uppercase;
+}
