@@ -40,7 +40,9 @@ def get_readings(text: str, context: str | None = None, offset: int | None = Non
 def _kanji_readings(kanji: str, in_context: str, standalone: bool) -> list[Reading]:
     found = dictionary.kanji_readings(kanji)
     readings = [Reading(kana=r, label=r, kind="on") for r in found.on]
-    readings += [_kun_reading(r) for r in found.kun]
+    # Affix markers are stripped, so "なま" and "なま-" collapse into one reading.
+    kun = {r.label: r for r in map(_kun_reading, found.kun)}
+    readings += kun.values()
     if not standalone:
         return readings
     # The kanji is a whole word here (e.g. 生 read as なま), so mark the reading that fits.

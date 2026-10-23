@@ -1,4 +1,5 @@
 import { createEditor } from "./editor/editor.js";
+import { setupLookupPopup } from "./ui/lookup-popup.js";
 import { createStatusbar } from "./ui/statusbar.js";
 import { setupUpload } from "./ui/upload.js";
 
@@ -19,6 +20,12 @@ setupUpload({
   button: document.getElementById("open-image"),
   input: document.getElementById("image-input"),
   editor,
+  status,
+});
+
+setupLookupPopup({
+  editor,
+  scroller: document.querySelector(".workspace"),
   status,
 });
 

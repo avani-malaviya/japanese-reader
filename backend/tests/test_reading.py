@@ -21,6 +21,7 @@ def test_single_kanji_lists_all_on_and_kun_readings() -> None:
     kun = [r.label for r in readings if r.kind == "kun"]
     assert {"せい", "しょう"} <= set(on)
     assert {"い(きる)", "なま"} <= set(kun)
+    assert len(kun) == len(set(kun))
 
 
 def test_kanji_inside_a_word_has_no_contextual_reading() -> None:

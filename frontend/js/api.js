@@ -14,6 +14,18 @@ async function request(path, options) {
   return response.json();
 }
 
+function postJson(path, payload) {
+  return request(path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export function getReadings({ text, context, offset }) {
+  return postJson("/reading", { text, context, offset });
+}
+
 export function ocrImage(file) {
   const body = new FormData();
   body.append("image", file);
