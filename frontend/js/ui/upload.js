@@ -1,6 +1,6 @@
 import { ocrImage } from "../api.js";
 
-export function setupUpload({ button, input, editor, status, onLoaded }) {
+export function setupUpload({ button, input, editor, status }) {
   button.addEventListener("click", () => input.click());
 
   input.addEventListener("change", async () => {
@@ -18,7 +18,6 @@ export function setupUpload({ button, input, editor, status, onLoaded }) {
       const { paragraphs } = await ocrImage(file);
       editor.setParagraphs(paragraphs);
       status.set(paragraphs.length ? `Read ${file.name}` : `No text found in ${file.name}`);
-      onLoaded?.();
     } catch (error) {
       status.set(`Error: ${error.message}`);
     } finally {

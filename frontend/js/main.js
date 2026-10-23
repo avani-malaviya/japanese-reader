@@ -7,16 +7,20 @@ const status = createStatusbar({
   countEl: document.getElementById("status-count"),
 });
 
-const editor = createEditor(document.getElementById("document"));
+const editor = createEditor(document.getElementById("document"), {
+  onChange: () => updateCount(),
+});
 
-const updateCount = () => status.setCount(editor.getText().replace(/\s/g, "").length);
+function updateCount() {
+  status.setCount(editor.getText().replace(/\s/g, "").length);
+}
 
 setupUpload({
   button: document.getElementById("open-image"),
   input: document.getElementById("image-input"),
   editor,
   status,
-  onLoaded: updateCount,
 });
 
+updateCount();
 status.set("Ready");
