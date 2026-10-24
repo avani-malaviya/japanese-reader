@@ -1,5 +1,6 @@
 import { startSession } from "./api.js";
 import { createEditor } from "./editor/editor.js";
+import { setupAskAiDialog } from "./ui/ask-ai-dialog.js";
 import { setupFigureControls } from "./ui/figure-controls.js";
 import { setupLookupPopup } from "./ui/lookup-popup.js";
 import { setupNewDocument } from "./ui/new-document.js";
@@ -33,10 +34,13 @@ setupUpload({
   status,
 });
 
+const askAi = setupAskAiDialog({ status });
+
 setupLookupPopup({
   editor,
   scroller: document.querySelector(".workspace"),
   status,
+  onAskAI: askAi.open,
 });
 
 setupFigureControls({

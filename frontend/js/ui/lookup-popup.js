@@ -9,7 +9,7 @@ import { renderMeaning } from "./meaning-view.js";
 
 const GROUP_LABELS = { word: "読み READING", on: "音 ON", kun: "訓 KUN" };
 
-export function setupLookupPopup({ editor, scroller, status }) {
+export function setupLookupPopup({ editor, scroller, status, onAskAI }) {
   const popup = el("div", "popup");
   popup.hidden = true;
   popup.setAttribute("role", "dialog");
@@ -118,7 +118,12 @@ export function setupLookupPopup({ editor, scroller, status }) {
     insert.disabled = !current.chosen || current.chosen.kana === current.info.text;
     const meaning = actionButton("Meaning", "Look up the dictionary meaning", onMeaning);
     meaning.setAttribute("aria-pressed", String(Boolean(current.meaning)));
-    actions.append(insert, meaning);
+    const askAI = actionButton("Ask AI", "Ask ChatGPT or Claude to explain the grammar", () => {
+      const { info } = current;
+      close();
+      onAskAI(info);
+    });
+    actions.append(insert, meaning, askAI);
 
     if (current.ruby) {
       actions.append(
