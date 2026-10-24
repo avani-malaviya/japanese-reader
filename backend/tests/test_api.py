@@ -5,9 +5,10 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app.api.ocr import figure_detector, ocr_engine
+from app.api.ocr import layout_detector, ocr_engine
 from app.main import create_app
 from app.services.ocr.base import Box, TextBlock
+from app.services.regions.base import Region
 from tests.factories import block, block_of, line
 
 
@@ -19,21 +20,21 @@ class FakeOcrEngine:
         ]
 
 
-class NoFigures:
-    def detect(self, image: Image.Image) -> list[Box]:
+class NoRegions:
+    def detect(self, image: Image.Image) -> list[Region]:
         return []
 
 
 class OneFigure:
-    def detect(self, image: Image.Image) -> list[Box]:
-        return [Box(0, 0, 20, 20)]
+    def detect(self, image: Image.Image) -> list[Region]:
+        return [Region(Box(0, 0, 20, 20), "figure", 0.9)]
 
 
 @pytest.fixture
 def app() -> FastAPI:
     app = create_app()
     app.dependency_overrides[ocr_engine] = FakeOcrEngine
-    app.dependency_overrides[figure_detector] = NoFigures
+    app.dependency_overrides[layout_detector] = NoRegions
     return app
 
 
@@ -74,7 +75,7 @@ def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
 
 
 def test_ocr_returns_figures_as_dithered_png(app: FastAPI) -> None:
-    app.dependency_overrides[figure_detector] = OneFigure
+    app.dependency_overrides[layout_detector] = OneFigure
     response = TestClient(app).post(
         "/api/ocr", files={"image": ("page.png", image_bytes(), "image/png")}
     )

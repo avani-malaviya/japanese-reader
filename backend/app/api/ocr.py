@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.api.schemas import FigureOut, OcrResponse, PageItemOut, ParagraphOut, RubyOut
 from app.config import MAX_UPLOAD_BYTES
-from app.services.figures.base import FigureDetector
-from app.services.figures.doclayout_detector import get_detector
+from app.services.regions.base import LayoutDetector
+from app.services.regions.doclayout_detector import get_detector
 from app.services.ocr.base import OcrEngine, PageItem, Paragraph
 from app.services.ocr.mokuro_engine import get_engine
 from app.services.ocr.service import InvalidImageError, read_page
@@ -19,7 +19,7 @@ def ocr_engine() -> OcrEngine:
     return get_engine()
 
 
-def figure_detector() -> FigureDetector:
+def layout_detector() -> LayoutDetector:
     return get_detector()
 
 
@@ -35,7 +35,7 @@ def to_out(item: PageItem) -> PageItemOut:
 def ocr(
     image: Annotated[UploadFile, File()],
     engine: Annotated[OcrEngine, Depends(ocr_engine)],
-    detector: Annotated[FigureDetector, Depends(figure_detector)],
+    detector: Annotated[LayoutDetector, Depends(layout_detector)],
 ) -> OcrResponse:
     data = image.file.read(MAX_UPLOAD_BYTES + 1)
     if len(data) > MAX_UPLOAD_BYTES:

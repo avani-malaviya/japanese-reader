@@ -3,11 +3,11 @@ import io
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 
-from app.services.figures.base import FigureDetector
 from app.services.images import to_dithered_png
 from app.services.ocr import furigana
 from app.services.ocr.base import FigureItem, OcrEngine, OcrResult, PageItem, Paragraph
 from app.services.ocr.layout import PlacedFigure, arrange
+from app.services.regions.base import LayoutDetector, picture_boxes
 
 # iPhone photos are HEIC by default; teach Pillow to open them.
 register_heif_opener()
@@ -27,11 +27,11 @@ def decode_image(data: bytes) -> Image.Image:
     return ImageOps.exif_transpose(image).convert("RGB")
 
 
-def read_page(engine: OcrEngine, detector: FigureDetector, data: bytes) -> OcrResult:
+def read_page(engine: OcrEngine, detector: LayoutDetector, data: bytes) -> OcrResult:
     image = decode_image(data)
     items: list[PageItem] = []
     blocks = furigana.extract(engine.read_blocks(image))
-    for element in arrange(blocks, detector.detect(image)):
+    for element in arrange(blocks, picture_boxes(detector.detect(image))):
         if isinstance(element, PlacedFigure):
             png = to_dithered_png(image, element.box)
             items.append(FigureItem(png=png, width_ratio=element.width_ratio, align=element.align))

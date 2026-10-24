@@ -50,7 +50,7 @@ in [frontend/js/config.js](frontend/js/config.js); backend limits are in
  │ ui/lookup-popup.js ─┤     │ ─────────────►│                 ├ mokuro_engine.py           │
  │ ui/meaning-view.js  │     │               │                 │   comic-text-detector      │
  │ ui/statusbar.js     ▼     │               │                 │   + manga-ocr              │
- │               js/api.js   │               │                 ├ figures/doclayout_detector │
+ │               js/api.js   │               │                 ├ regions/doclayout_detector │
  │                           │               │                 │   DocLayout-YOLO (pictures)│
  │                           │               │                 ├ layout.py  (reading order) │
  │                           │               │                 └ images.py  (1-bit dither)  │
@@ -100,7 +100,7 @@ backend/                     uv project (Python 3.12)
   app/config.py              limits and settings
   app/api/                   HTTP layer: ocr.py, lookup.py, schemas.py, health.py
   app/services/ocr/          base.py (OcrEngine interface), mokuro_engine.py, layout.py, service.py
-  app/services/figures/      base.py (FigureDetector interface), doclayout_detector.py
+  app/services/regions/      base.py (LayoutDetector interface), doclayout_detector.py
   app/services/images.py     crop + 1-bit dither pictures
   app/services/reading.py    readings for a selection
   app/services/meaning.py    dictionary meanings for a selection

@@ -10,8 +10,8 @@ black-and-white style, roughly where they were on the page.
 ## Decision
 - **Detection:** DocLayout-YOLO (`juliozhao/DocLayout-YOLO-DocStructBench`, ~40 MB), a
   document-layout model trained on varied documents. We keep only its `figure` class
-  (score ≥ 0.4, ignoring specks under 0.5% of the page). It sits behind the `FigureDetector`
-  interface (`services/figures/base.py`).
+  (score ≥ 0.4, ignoring specks under 0.5% of the page). It sits behind the `LayoutDetector`
+  interface (`services/regions/base.py`).
 - **Rendering:** crop → grayscale → autocontrast → ≤ 800 px wide → Floyd–Steinberg 1-bit PNG
   (`services/images.py`). Sent to the browser as data URIs and stored inside the document.
 - **Placement:** a flow approximation, not pixel positions, because the text is reflowed anyway.
