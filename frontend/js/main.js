@@ -1,4 +1,5 @@
 import { createEditor } from "./editor/editor.js";
+import { setupFigureControls } from "./ui/figure-controls.js";
 import { setupLookupPopup } from "./ui/lookup-popup.js";
 import { setupNewDocument } from "./ui/new-document.js";
 import { createStatusbar } from "./ui/statusbar.js";
@@ -32,6 +33,12 @@ setupUpload({
 });
 
 setupLookupPopup({
+  editor,
+  scroller: document.querySelector(".workspace"),
+  status,
+});
+
+setupFigureControls({
   editor,
   scroller: document.querySelector(".workspace"),
   status,

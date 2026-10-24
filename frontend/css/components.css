@@ -303,3 +303,79 @@
   border: none;
   border-top: 1px dashed var(--ink);
 }
+
+/* ---- picture controls (overlay, never part of the document) ---- */
+.figure-overlay {
+  position: fixed;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.figure-overlay[hidden],
+.drop-bar[hidden] {
+  display: none;
+}
+
+.figure-overlay__frame {
+  position: absolute;
+  inset: 0;
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+  cursor: move;
+  pointer-events: auto;
+}
+
+.figure-overlay__handle {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 11px;
+  height: 11px;
+  border: 1px solid var(--paper);
+  background: var(--ink);
+  cursor: nwse-resize;
+  pointer-events: auto;
+}
+
+.figure-overlay__toolbar {
+  position: absolute;
+  left: -2px;
+  bottom: 100%;
+  display: flex;
+  margin-bottom: var(--space-1);
+  border: var(--border);
+  background: var(--paper);
+  box-shadow: var(--hard-shadow);
+  pointer-events: auto;
+}
+
+.tool {
+  min-width: 26px;
+  padding: 2px var(--space-1);
+  border: none;
+  border-right: var(--border);
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.tool:last-child {
+  border-right: none;
+}
+
+.tool:hover,
+.tool[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.drop-bar {
+  position: fixed;
+  z-index: 9;
+  height: 3px;
+  background: var(--ink);
+  pointer-events: none;
+}
+
+.figure img {
+  -webkit-user-drag: none;
+}
