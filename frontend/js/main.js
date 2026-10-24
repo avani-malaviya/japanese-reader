@@ -1,5 +1,6 @@
 import { startSession } from "./api.js";
 import { createEditor } from "./editor/editor.js";
+import { setupAiChatButton } from "./ui/ai-chat-button.js";
 import { setupAskAiDialog } from "./ui/ask-ai-dialog.js";
 import { setupFigureControls } from "./ui/figure-controls.js";
 import { setupLookupPopup } from "./ui/lookup-popup.js";
@@ -35,6 +36,7 @@ setupUpload({
 });
 
 const askAi = setupAskAiDialog({ status });
+setupAiChatButton({ button: document.getElementById("ai-chat"), status });
 
 setupLookupPopup({
   editor,

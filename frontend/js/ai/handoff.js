@@ -61,3 +61,23 @@ export async function askInWindow(providerId, prompt) {
   const win = openAiWindow(prefilled ? url : provider.newChat);
   return { opened: Boolean(win), prefilled, copied: await copying };
 }
+
+/**
+ * Brings the AI window back, e.g. to scroll through the conversation. Never re-sends a
+ * question: an open window is just focused; a closed one reopens on the provider's chat list.
+ * Returns "focused", "reopened" or "blocked".
+ */
+export function showChatWindow(providerId) {
+  // With an empty URL, an existing window of this name is returned untouched.
+  const win = window.open("", AI_WINDOW.name, windowFeatures());
+  if (!win) return "blocked";
+  let isBlank;
+  try {
+    isBlank = win.location.href === "about:blank"; // a fresh window: there was none open
+  } catch {
+    isBlank = false; // cross-origin: it is showing the chat
+  }
+  if (isBlank) win.location.href = AI_PROVIDERS[providerId].chats;
+  win.focus();
+  return isBlank ? "reopened" : "focused";
+}
