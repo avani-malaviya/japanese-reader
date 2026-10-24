@@ -28,6 +28,7 @@ Everything runs locally and uses only open-source models and open data.
 | **Insert** | Adds the chosen reading as furigana *below* the selected text and the occurrences after it (5 in total). |
 | **Remove** | Click any furigana → **Remove** (just that one) or **Remove all** (same word + reading everywhere). |
 | **Meaning** | Shows dictionary entries (part of speech + glosses) for the selection. Inflected words (話しました) are looked up by dictionary form (話す). Word-level only — no sentence translation, on purpose. |
+| **Ask AI** | Sends the highlighted text and its sentence to **your own ChatGPT or Claude account** with a saved grammar template: dictionary form and meaning, conjugation type and rules, the pattern and how it attaches to nouns / i-adjectives / na-adjectives / verbs, examples. Edit the template once (**Save as default**), or add a note per question. The answer opens in a floating window over the app; **[ AI CHAT ]** brings it back. No API keys; nothing is sent until you press Send. |
 
 ## Using it
 
@@ -39,6 +40,9 @@ Everything runs locally and uses only open-source models and open data.
    - click a reading to choose it, then **[ INSERT ]** to add it as furigana;
    - **[ MEANING ]** toggles dictionary entries.
 4. `Esc` or clicking elsewhere closes the box.
+5. **[ ASK AI ]** in the box opens the Ask AI panel: add an optional note, pick ChatGPT or Claude,
+   **[ SEND ]**. The first time, Chrome may ask you to allow pop-ups for `localhost`. You need to be
+   logged in to that service in this browser. **[ AI CHAT ]** in the toolbar shows the chat again.
 
 Settings worth knowing: the number of occurrences that get furigana is `FURIGANA_OCCURRENCES`
 in [frontend/js/config.js](frontend/js/config.js); backend limits are in
@@ -122,7 +126,9 @@ frontend/                    served as-is, no build
   js/api.js                  every backend call
   js/config.js               frontend settings
   js/editor/                 the document: editor, selection, furigana, storage
-  js/ui/                     around the document: upload, lookup popup, meaning view, status bar
+  js/ui/                     around the document: upload, lookup popup, meaning view, status bar,
+                             picture controls, Ask AI box
+  js/ai/                     Ask AI: prompt template, handoff to ChatGPT / Claude
 ```
 
 ## Running locally ("deployment")
@@ -168,6 +174,8 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
   produce a missed or extra heading, which you can retype as normal text.
 - Printed furigana are only recovered when the OCR reads them; very small ruby is sometimes missed.
 - Columns are recreated on horizontal pages only; vertical pages become a single column.
+- Ask AI answers live in the ChatGPT/Claude window, not in the document. Pre-filling relies on
+  their `?q=` links; if that ever stops working, the prompt is on your clipboard to paste.
 
 ## Roadmap
 
@@ -191,6 +199,7 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
 - [x] Multi-page documents: new pages added at the cursor
 - [x] Printed furigana → ruby
 - [x] Page structure: headings, captions, page furniture, columns
+- [x] Ask AI: grammar template handed to your ChatGPT / Claude account
 
 **Later ideas**
 
