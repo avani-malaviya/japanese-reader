@@ -16,7 +16,7 @@ API keys.
   OpenAI and Anthropic do not let third-party apps use subscription logins, so this is the only
   account-based route.
 - **A floating window, not a bubble.** Both sites refuse to be embedded in another page, so the
-  answer can't appear inside the app. A dialog-sized window (560×680) opens centred over the app
+  answer can't appear inside the app. A short landscape window (800×460), like an alert dialog, opens centred over the app
   and is reused for every question; **[ AI CHAT ]** brings it back without re-sending anything.
 - **Full screen opens tabs.** In macOS full screen, Chrome turns every pop-up into a tab, and a
   page can't change that. The app detects it (`display-mode: fullscreen`) and says so in the

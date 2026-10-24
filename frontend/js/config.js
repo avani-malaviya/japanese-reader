@@ -24,6 +24,7 @@ export const AI_PROVIDERS = {
     chats: "https://claude.ai/recents",
   },
 };
-export const AI_WINDOW = { name: "japanese-reader-ai", width: 560, height: 680, offsetTop: 80 };
+// A short landscape box, like an old alert dialog, centred over the app.
+export const AI_WINDOW = { name: "japanese-reader-ai", width: 800, height: 460 };
 // Longer pre-filled URLs risk being refused; the prompt is copied to paste instead.
 export const AI_MAX_URL_LENGTH = 7000;

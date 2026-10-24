@@ -46,9 +46,9 @@ export function onFullScreenChange(callback) {
 
 // A dialog-sized window floating over the middle of the app, not a split screen.
 function windowFeatures() {
-  const { width, height, offsetTop } = AI_WINDOW;
+  const { width, height } = AI_WINDOW;
   const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
-  const top = Math.round(window.screenY + offsetTop);
+  const top = Math.round(window.screenY + (window.outerHeight - height) / 2);
   return `popup,width=${width},height=${height},left=${left},top=${top}`;
 }
 
