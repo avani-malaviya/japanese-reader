@@ -25,7 +25,12 @@ def layout_detector() -> LayoutDetector:
 
 def to_out(item: PageItem) -> PageItemOut:
     if isinstance(item, Paragraph):
-        return ParagraphOut(text=item.text, ruby=[RubyOut(**asdict(r)) for r in item.ruby])
+        return ParagraphOut(
+            text=item.text,
+            ruby=[RubyOut(**asdict(r)) for r in item.ruby],
+            role=item.role,
+            level=item.level,
+        )
     src = "data:image/png;base64," + base64.b64encode(item.png).decode("ascii")
     return FigureOut(src=src, width_ratio=item.width_ratio, align=item.align)
 

@@ -28,15 +28,22 @@ function renderText(parent, text, ruby = []) {
   parent.append(text.slice(position));
 }
 
+// One house style for structure read off any page: <h1> page title, <h2> subtitles, captions.
+function renderParagraph({ text, ruby, role, level }) {
+  const tag = role === "heading" ? (level === 1 ? "h1" : "h2") : "p";
+  const node = document.createElement(tag);
+  if (role === "caption") node.className = "caption";
+  renderText(node, text, ruby);
+  return node;
+}
+
 function renderItem(item) {
   if (item.type === "figure") return renderFigure(item);
-  const p = document.createElement("p");
-  renderText(p, item.text, item.ruby);
-  return p;
+  return renderParagraph(item);
 }
 
 function isEmptyParagraph(node) {
-  return node?.tagName === "P" && node.textContent.trim() === "" && !node.querySelector("img");
+  return ["P", "H1", "H2"].includes(node?.tagName) && node.textContent.trim() === "" && !node.querySelector("img");
 }
 
 export function createEditor(el, { onChange, onSaveFailed } = {}) {

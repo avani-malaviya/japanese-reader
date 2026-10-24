@@ -2,6 +2,9 @@
 
 import { MAX_LOOKUP_CHARS } from "../config.js";
 
+// Elements whose text is read as one unit for lookups.
+export const TEXT_BLOCKS = "p, h1, h2";
+
 function plainTextLength(fragment) {
   fragment.querySelectorAll("rt").forEach((rt) => rt.remove());
   return fragment.textContent.length;
@@ -33,7 +36,7 @@ export function getSelectionInfo(root) {
   const range = selection.getRangeAt(0);
   const node = range.commonAncestorContainer;
   const element = node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement;
-  const paragraph = element.closest("p");
+  const paragraph = element.closest(TEXT_BLOCKS);
   if (!paragraph || !root.contains(paragraph)) return null; // e.g. spans paragraphs
 
   const context = plainText(paragraph);

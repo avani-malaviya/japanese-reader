@@ -381,3 +381,28 @@
 .figure img {
   -webkit-user-drag: none;
 }
+
+/* ---- page structure: one house style for every page ---- */
+.page h1,
+.page h2 {
+  margin: 0 0 var(--space-3);
+  font-family: var(--font-doc);
+  font-weight: bold;
+  line-height: 1.8;
+}
+
+.page h1 {
+  font-size: var(--h1-size);
+  border-bottom: var(--frame);
+}
+
+.page h2 {
+  font-size: var(--h2-size);
+  border-bottom: var(--border);
+}
+
+.page .caption {
+  font-family: var(--font-ui);
+  font-size: var(--caption-size);
+  line-height: 1.8;
+}

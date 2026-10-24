@@ -17,6 +17,8 @@ class ParagraphOut(BaseModel):
     type: Literal["paragraph"] = "paragraph"
     text: str
     ruby: list[RubyOut] = []
+    role: Literal["body", "heading", "caption"] = "body"
+    level: int = 0  # headings: 1 (page title) or 2
 
 
 class FigureOut(BaseModel):

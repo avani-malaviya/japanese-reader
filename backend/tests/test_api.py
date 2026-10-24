@@ -15,7 +15,7 @@ from tests.factories import block, block_of, line
 class FakeOcrEngine:
     def read_blocks(self, image: Image.Image) -> list[TextBlock]:
         return [
-            block("二番目", 0, 0, 10, 100, vertical=True),
+            block("二番目", 5, 0, 10, 100, vertical=True),
             block_of([line("一番", 55, 0, 60, 100, True), line("目", 50, 0, 55, 100, True)], True),
         ]
 
@@ -67,8 +67,8 @@ def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
     assert response.status_code == 200
     assert response.json() == {
         "items": [
-            {"type": "paragraph", "text": "一番目", "ruby": []},
-            {"type": "paragraph", "text": "二番目", "ruby": []},
+            {"type": "paragraph", "text": "一番目", "ruby": [], "role": "body", "level": 0},
+            {"type": "paragraph", "text": "二番目", "ruby": [], "role": "body", "level": 0},
         ],
         "text": "一番目\n\n二番目",
     }

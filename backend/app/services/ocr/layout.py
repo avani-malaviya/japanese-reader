@@ -85,7 +85,14 @@ def order_blocks(blocks: list[T], vertical: bool) -> list[T]:
 
     width = max(b.box.x2 for b in blocks) - min(b.box.x1 for b in blocks)
     narrow_gutter = column_gap < MIN_GUTTER_RATIO * width
-    if len(bands) > 1 and (narrow_gutter or band_gap * BAND_PREFERENCE >= column_gap):
+    # A column of pictures beside a column of text is a list of rows: each picture belongs to
+    # the text next to it (how-to steps, product listings), so read row by row.
+    pictures_beside_text = len(columns) > 1 and any(
+        all(isinstance(b, PlacedFigure) for b in piece) for piece in columns
+    )
+    if len(bands) > 1 and (
+        narrow_gutter or pictures_beside_text or band_gap * BAND_PREFERENCE >= column_gap
+    ):
         pieces = bands
     elif len(columns) > 1:
         pieces = columns

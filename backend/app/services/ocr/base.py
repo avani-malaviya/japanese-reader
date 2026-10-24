@@ -63,14 +63,20 @@ class TextLine:
     ruby: tuple[Ruby, ...] = ()
 
 
+Role = Literal["body", "heading", "caption"]
+
+
 @dataclass(frozen=True)
 class TextBlock:
-    """A region of text as found by an engine. `lines` are already in reading order."""
+    """A region of text as found by an engine. `lines` are already in reading order.
+    `role` and `level` are filled in later, from the page's structure."""
 
     box: Box
     vertical: bool
     lines: list[TextLine] = field(default_factory=list)
     font_size: float = 0.0
+    role: Role = "body"
+    level: int = 0  # headings: 1 (page title) or 2
 
     @property
     def text(self) -> str:
@@ -92,6 +98,8 @@ class TextBlock:
 class Paragraph:
     text: str
     ruby: tuple[Ruby, ...] = ()
+    role: Role = "body"
+    level: int = 0
 
 
 Align = Literal["left", "center", "right"]

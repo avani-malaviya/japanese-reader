@@ -1,11 +1,8 @@
-import json
-from pathlib import Path
-
 from app.services.ocr.base import Box
 from app.services.ocr.layout import PlacedFigure, arrange, is_vertical_page
-from tests.factories import block, block_of, line
-
-FIXTURES = Path(__file__).parent / "fixtures"
+from app.services.ocr.structure import build_units
+from app.services.regions.base import picture_boxes
+from tests.factories import block, block_of, line, load_page
 
 
 def labels(elements: list) -> list[str]:
@@ -86,15 +83,25 @@ def test_how_to_page_pairs_each_photo_with_its_step_and_keeps_sidebar_together()
 
 
 def test_skewed_phone_photo_of_a_how_to_page() -> None:
-    # Boxes detected on a real phone photo (slightly skewed) of a gardening book page:
-    # five step photos, each with its text to the right, and two sidebars further right.
-    data = json.loads((FIXTURES / "howto_page_photo_boxes.json").read_text())
-    blocks = [block(b[5], *b[:4], vertical=b[4]) for b in data["blocks"]]
-    order = labels(arrange(blocks, [Box(*f) for f in data["figures"]]))
-    steps = ["ラッカセイは肥料が多すぎ", "１ヶ所に対して２粒のタネ", "本葉が２枚程度になったタ", "花が咲きはじめたら、子房"]
+    # Recorded from a real phone photo (slightly skewed) of a gardening book page: five step
+    # photos, each with its text to the right, and two sidebars further right.
+    blocks, regions = load_page("howto_page_photo.json")
+    order = labels(arrange(blocks, picture_boxes(regions)))
+    steps = ["ラッカセイは肥料が", "１ヶ所に対して", "本葉が２枚程度", "花が咲きはじめたら"]
     for step in steps:
-        assert order[order.index(step) - 1] == "[図]", f"{step} should follow its photo"
-    assert order.index("裁培の豆知識土が乾燥して") > order.index("本葉が２枚程度になったタ")
+        index = next(i for i, text in enumerate(order) if text.startswith(step))
+        assert order[index - 1] == "[図]", f"{step} should follow its photo"
+    tips = next(i for i, text in enumerate(order) if "豆知識" in text)
+    assert tips > next(i for i, text in enumerate(order) if text.startswith("本葉が"))
+
+
+def test_after_structure_photos_still_pair_with_their_steps() -> None:
+    # Same page after headings are split out and margin tabs dropped (the real pipeline).
+    blocks, regions = load_page("howto_page_photo.json")
+    order = labels(arrange(build_units(blocks, regions), picture_boxes(regions)))
+    for step in ["ラッカセイは肥料が", "１ヶ所に対して", "本葉が２枚程度", "花が咲きはじめたら"]:
+        index = next(i for i, text in enumerate(order) if text.startswith(step))
+        assert order[index - 1] == "[図]", f"{step} should follow its photo"
 
 
 def test_wide_figures_are_centred_and_narrow_ones_float_to_their_side() -> None:
