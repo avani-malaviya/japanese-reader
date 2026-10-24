@@ -1,7 +1,7 @@
 import { startSession } from "./api.js";
+import { setupDesktopScreen } from "./desktop/desktop.js";
 import { createEditor } from "./editor/editor.js";
 import { currentRoute, onRouteChange } from "./router.js";
-import { setupDesktopScreen } from "./screens/desktop-screen.js";
 import { setupEditorScreen } from "./screens/editor-screen.js";
 import { setupAiChatButton } from "./ui/ai-chat-button.js";
 import { setupAskAiDialog } from "./ui/ask-ai-dialog.js";

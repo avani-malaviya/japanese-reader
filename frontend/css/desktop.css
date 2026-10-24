@@ -1,0 +1,249 @@
+/* The desktop (library) surface. Pastel palette + blue ink: see DESIGN_RULES "Desktop". */
+
+.desktop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--desk-ink);
+  font-family: var(--font-ui);
+  font-size: var(--ui-size);
+  /* 1-bit dither of the two mints, like an old desktop pattern. */
+  background-color: var(--desk-mint);
+  background-image: repeating-conic-gradient(var(--desk-mint-light) 0 25%, var(--desk-mint) 0 50%);
+  background-size: 4px 4px;
+}
+
+/* ---- menu bar ---- */
+.desk-menubar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 32px;
+  padding: 0 var(--space-3);
+  border-bottom: var(--desk-border);
+  background: var(--desk-cream);
+}
+
+.desk-menubar__brand {
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.desk-menubar__spacer {
+  flex: 1;
+}
+
+.desk-menubar__clock {
+  white-space: pre;
+}
+
+/* ---- buttons ---- */
+.desk-btn {
+  padding: 2px var(--space-2);
+  border: var(--desk-border);
+  background: var(--desk-cream);
+  color: var(--desk-ink);
+  box-shadow: 2px 2px 0 var(--desk-ink);
+  cursor: pointer;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.desk-btn:hover,
+.desk-btn:focus-visible {
+  background: var(--desk-ink);
+  color: var(--desk-cream);
+  outline: none;
+}
+
+.desk-btn:active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+.desk-btn:disabled {
+  border-color: var(--desk-ink-soft);
+  color: var(--desk-ink-soft);
+  box-shadow: none;
+  cursor: default;
+}
+
+/* ---- icons ---- */
+.desk-icons {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+}
+
+.desk-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  width: var(--desk-icon-cell);
+  padding: var(--space-1);
+  border: none;
+  background: none;
+  color: var(--desk-ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.desk-icon:focus {
+  outline: none;
+}
+
+.px-icon {
+  width: var(--desk-icon-size);
+  height: var(--desk-icon-size);
+}
+
+.desk-icon__label {
+  max-width: 100%;
+  padding: 0 var(--space-1);
+  background: var(--desk-cream);
+  border: 1px solid var(--desk-ink);
+  overflow-wrap: anywhere;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.desk-icon[aria-selected="true"] .desk-icon__label {
+  background: var(--desk-ink);
+  color: var(--desk-cream);
+}
+
+.desk-icon[aria-selected="true"] .px-icon {
+  outline: 2px dotted var(--desk-ink);
+  outline-offset: 2px;
+}
+
+/* pixel icon colours */
+.px-line {
+  fill: none;
+  stroke: var(--desk-ink);
+  stroke-width: 1;
+}
+.px-pink { fill: var(--desk-pink); }
+.px-pink-deep { fill: var(--desk-pink-deep); }
+.px-cream { fill: var(--desk-cream); }
+.px-lavender { fill: var(--desk-lavender); }
+.px-purple { fill: var(--desk-purple); }
+.px-ink-soft { fill: var(--desk-ink-soft); }
+
+/* ---- windows and dialogs ---- */
+.dwin {
+  display: flex;
+  flex-direction: column;
+  border: var(--desk-border);
+  background: var(--desk-cream);
+  box-shadow: var(--desk-shadow);
+  color: var(--desk-ink);
+}
+
+/* Striped title bar, a 1-bit pattern in the two pinks. */
+.dwin__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 26px;
+  padding: 0 var(--space-1) 0 var(--space-2);
+  border-bottom: var(--desk-border);
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--desk-pink-deep) 0 2px,
+    var(--desk-pink-light) 2px 4px
+  );
+  user-select: none;
+}
+
+.dwin__name {
+  padding: 0 var(--space-2);
+  background: var(--desk-cream);
+  border: 1px solid var(--desk-ink);
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dwin__close {
+  margin-left: auto;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: var(--desk-border);
+  background: var(--desk-cream);
+  color: var(--desk-ink);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dwin__close:hover {
+  background: var(--desk-ink);
+  color: var(--desk-cream);
+}
+
+.dwin__body {
+  padding: var(--space-3);
+}
+
+.desk-blocker {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+}
+
+.desk-dialog {
+  min-width: 320px;
+  max-width: min(440px, calc(100vw - 2 * var(--space-3)));
+}
+
+.desk-dialog__label {
+  display: block;
+  margin-bottom: var(--space-1);
+}
+
+.desk-dialog__message {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.desk-input {
+  width: 100%;
+  padding: var(--space-1);
+  border: var(--desk-border);
+  background: var(--desk-pink-light);
+  color: var(--desk-ink);
+  font: inherit;
+}
+
+.desk-input:focus {
+  outline: 2px dotted var(--desk-ink);
+  outline-offset: 2px;
+}
+
+.desk-dialog__actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 0 var(--space-3) var(--space-3);
+}
+
+.desk-dialog__actions .desk-btn {
+  min-width: 80px;
+}
+
+.desktop ::selection,
+.desk-blocker ::selection {
+  background: var(--desk-ink);
+  color: var(--desk-cream);
+}

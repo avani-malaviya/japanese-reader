@@ -29,4 +29,20 @@
 
   --page-width: 40em;
   --bar-height: 24px;
+
+  /* ---- desktop (library) surface: pastel palette + blue ink, see DESIGN_RULES ---- */
+  --desk-mint: #a9e1dc;
+  --desk-mint-light: #c7ece5;
+  --desk-cream: #f5f9e8;
+  --desk-pink-light: #fadddd;
+  --desk-pink: #fbcfca;
+  --desk-pink-deep: #fdbaba;
+  --desk-ink: #3b42d5;
+  --desk-ink-soft: #6894e4;
+  --desk-lavender: #dbc5fe;
+  --desk-purple: #b38af8;
+  --desk-border: 2px solid var(--desk-ink);
+  --desk-shadow: 4px 4px 0 var(--desk-ink);
+  --desk-icon-size: 56px;
+  --desk-icon-cell: 104px;
 }
