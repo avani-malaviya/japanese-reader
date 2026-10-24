@@ -12,7 +12,8 @@ export function setupEditorScreen({ root, titleEl, backButton, status }) {
     status.setSaveState("Saving…");
     try {
       await saveDocument(current.id, html);
-      status.setSaveState("Saved ·");
+      // Only "Saved" if nothing changed while this was being sent.
+      if (html === editor.el.innerHTML) status.setSaveState("Saved ·");
     } catch (error) {
       status.setSaveState("Not saved ·");
       status.set(`Not saved: ${error.message}`);
@@ -54,6 +55,10 @@ export function setupEditorScreen({ root, titleEl, backButton, status }) {
     show,
     hide,
     save,
+    // An edit not yet saved.
+    markDirty() {
+      if (current) status.setSaveState("Edited ·");
+    },
     // The editor is created after this screen, because its autosave calls `save`.
     attach(createdEditor) {
       editor = createdEditor;

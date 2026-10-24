@@ -61,23 +61,33 @@ function isEmptyParagraph(node) {
   return ["P", "H1", "H2"].includes(node?.tagName) && node.textContent.trim() === "" && !node.querySelector("img");
 }
 
-export function createEditor(el, { onChange, onSave }) {
+export function createEditor(el, { onChange, onSave, onDirty }) {
   let saveTimer = null;
   let saving = Promise.resolve(); // saves run one after another, in order
+  let inFlight = 0;
   let caret = null; // last caret position inside the document, kept while toolbar buttons have focus
 
   function save() {
     saveTimer = null;
     const html = el.innerHTML;
-    saving = saving.then(() => onSave(html));
+    inFlight++;
+    saving = saving.then(() => onSave(html)).finally(() => inFlight--);
     return saving;
   }
 
   function changed() {
     clearTimeout(saveTimer);
     saveTimer = setTimeout(save, AUTOSAVE_DELAY_MS);
+    onDirty?.();
     onChange?.();
   }
+
+  // Leaving now would lose an edit: one waiting for the autosave delay, or still being sent.
+  window.addEventListener("beforeunload", (event) => {
+    if (saveTimer === null && inFlight === 0) return;
+    flush();
+    event.preventDefault(); // the browser asks "Leave site?"; the save carries on meanwhile
+  });
 
   /** Saves any change still waiting for the autosave delay. */
   function flush() {

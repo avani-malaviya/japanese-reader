@@ -28,6 +28,7 @@ const editorScreen = setupEditorScreen({
 const editor = createEditor(document.getElementById("document"), {
   onChange: () => updateCount(),
   onSave: (html) => editorScreen.save(html),
+  onDirty: () => editorScreen.markDirty(),
 });
 editorScreen.attach(editor);
 
