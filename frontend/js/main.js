@@ -1,5 +1,6 @@
 import { startSession } from "./api.js";
 import { setupDesktopScreen } from "./desktop/desktop.js";
+import { importLegacyDocument } from "./desktop/import-legacy.js";
 import { createEditor } from "./editor/editor.js";
 import { currentRoute, onRouteChange } from "./router.js";
 import { setupEditorScreen } from "./screens/editor-screen.js";
@@ -72,6 +73,15 @@ async function showRoute(route) {
   }
 }
 
-onRouteChange(showRoute);
-startSession();
-showRoute(currentRoute());
+async function start() {
+  startSession();
+  try {
+    await importLegacyDocument();
+  } catch {
+    // The old document stays in the browser and is tried again next time.
+  }
+  onRouteChange(showRoute);
+  showRoute(currentRoute());
+}
+
+start();
