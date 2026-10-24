@@ -23,4 +23,4 @@ def test_dithered_png_is_pure_black_and_white() -> None:
     result = Image.open(io.BytesIO(png))
     assert result.mode == "1"
     assert result.width <= 800
-    assert set(result.convert("L").getdata()) == {0, 255}
+    assert set(result.convert("L").get_flattened_data()) == {0, 255}

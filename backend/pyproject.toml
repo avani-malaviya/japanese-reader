@@ -14,6 +14,8 @@ dependencies = [
     "jamdict>=0.1a11.post2",
     "jamdict-data>=1.5",
     "pillow-heif>=1.8.1",
+    "doclayout-yolo>=0.0.4",
+    "huggingface-hub>=2.3.0",
 ]
 
 [dependency-groups]

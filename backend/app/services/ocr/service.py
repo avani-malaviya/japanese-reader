@@ -3,8 +3,10 @@ import io
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pillow_heif import register_heif_opener
 
-from app.services.ocr.base import OcrEngine, OcrResult
-from app.services.ocr.layout import to_result
+from app.services.figures.base import FigureDetector
+from app.services.images import to_dithered_png
+from app.services.ocr.base import FigureItem, OcrEngine, OcrResult, PageItem, Paragraph
+from app.services.ocr.layout import PlacedFigure, arrange
 
 # iPhone photos are HEIC by default; teach Pillow to open them.
 register_heif_opener()
@@ -24,6 +26,13 @@ def decode_image(data: bytes) -> Image.Image:
     return ImageOps.exif_transpose(image).convert("RGB")
 
 
-def read_page(engine: OcrEngine, data: bytes) -> OcrResult:
+def read_page(engine: OcrEngine, detector: FigureDetector, data: bytes) -> OcrResult:
     image = decode_image(data)
-    return to_result(engine.read_blocks(image))
+    items: list[PageItem] = []
+    for element in arrange(engine.read_blocks(image), detector.detect(image)):
+        if isinstance(element, PlacedFigure):
+            png = to_dithered_png(image, element.box)
+            items.append(FigureItem(png=png, width_ratio=element.width_ratio, align=element.align))
+        elif element.text:
+            items.append(Paragraph(element.text))
+    return OcrResult(items=items)

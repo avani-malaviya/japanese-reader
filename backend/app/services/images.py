@@ -11,10 +11,10 @@ CROP_PADDING = 4
 
 
 def crop(image: Image.Image, box: Box, padding: int = CROP_PADDING) -> Image.Image:
-    left = max(0, int(box.x1) - padding)
-    top = max(0, int(box.y1) - padding)
-    right = min(image.width, int(box.x2) + padding)
-    bottom = min(image.height, int(box.y2) + padding)
+    left = min(image.width - 1, max(0, int(box.x1) - padding))
+    top = min(image.height - 1, max(0, int(box.y1) - padding))
+    right = max(left + 1, min(image.width, int(box.x2) + padding))
+    bottom = max(top + 1, min(image.height, int(box.y2) + padding))
     return image.crop((left, top, right, bottom))
 
 

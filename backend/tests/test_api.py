@@ -1,10 +1,11 @@
 import io
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from PIL import Image
 
-from app.api.ocr import ocr_engine
+from app.api.ocr import figure_detector, ocr_engine
 from app.main import create_app
 from app.services.ocr.base import Box, TextBlock
 
@@ -17,10 +18,26 @@ class FakeOcrEngine:
         ]
 
 
+class NoFigures:
+    def detect(self, image: Image.Image) -> list[Box]:
+        return []
+
+
+class OneFigure:
+    def detect(self, image: Image.Image) -> list[Box]:
+        return [Box(0, 0, 20, 20)]
+
+
 @pytest.fixture
-def client() -> TestClient:
+def app() -> FastAPI:
     app = create_app()
     app.dependency_overrides[ocr_engine] = FakeOcrEngine
+    app.dependency_overrides[figure_detector] = NoFigures
+    return app
+
+
+@pytest.fixture
+def client(app: FastAPI) -> TestClient:
     return TestClient(app)
 
 
@@ -49,6 +66,17 @@ def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
         "items": [{"type": "paragraph", "text": "一番目"}, {"type": "paragraph", "text": "二番目"}],
         "text": "一番目\n\n二番目",
     }
+
+
+def test_ocr_returns_figures_as_dithered_png(app: FastAPI) -> None:
+    app.dependency_overrides[figure_detector] = OneFigure
+    response = TestClient(app).post(
+        "/api/ocr", files={"image": ("page.png", image_bytes(), "image/png")}
+    )
+    items = response.json()["items"]
+    # Vertical page, read right to left: 一番目 (x≈55), picture (x≈10), 二番目 (x≈5).
+    assert [item["type"] for item in items] == ["paragraph", "figure", "paragraph"]
+    assert items[1]["src"].startswith("data:image/png;base64,")
 
 
 def test_ocr_accepts_heic(client: TestClient) -> None:

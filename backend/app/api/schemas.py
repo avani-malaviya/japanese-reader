@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +10,14 @@ class ParagraphOut(BaseModel):
     text: str
 
 
-PageItemOut = ParagraphOut
+class FigureOut(BaseModel):
+    type: Literal["figure"] = "figure"
+    src: str  # data: URI of a 1-bit PNG
+    width_ratio: float
+    align: Literal["left", "center", "right"]
+
+
+PageItemOut = Annotated[ParagraphOut | FigureOut, Field(discriminator="type")]
 
 
 class OcrResponse(BaseModel):
