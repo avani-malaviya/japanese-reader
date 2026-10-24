@@ -18,6 +18,9 @@ API keys.
 - **A floating window, not a bubble.** Both sites refuse to be embedded in another page, so the
   answer can't appear inside the app. A dialog-sized window (560×680) opens centred over the app
   and is reused for every question; **[ AI CHAT ]** brings it back without re-sending anything.
+- **Full screen opens tabs.** In macOS full screen, Chrome turns every pop-up into a tab, and a
+  page can't change that. The app detects it (`display-mode: fullscreen`) and says so in the
+  Ask AI box and status bar; maximising the window keeps the floating window.
 - **Clipboard as a safety net.** The prompt is always copied too. Prompts whose URL would be too
   long (> 7000 chars) open a blank new chat and the user pastes.
 - **Window reuse keeps `window.opener`.** Finding the window again by name requires it. The only

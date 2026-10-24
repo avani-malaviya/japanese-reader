@@ -475,3 +475,13 @@
   display: inline-flex;
   border: var(--border);
 }
+
+.ask-ai__notice {
+  margin-top: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: 1px dashed var(--ink);
+}
+
+.ask-ai__notice[hidden] {
+  display: none;
+}

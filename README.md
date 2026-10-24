@@ -43,6 +43,9 @@ Everything runs locally and uses only open-source models and open data.
 5. **[ ASK AI ]** in the box opens the Ask AI panel: add an optional note, pick ChatGPT or Claude,
    **[ SEND ]**. The first time, Chrome may ask you to allow pop-ups for `localhost`. You need to be
    logged in to that service in this browser. **[ AI CHAT ]** in the toolbar shows the chat again.
+   For the floating window, don't use full screen: in full screen Chrome opens pop-ups as tabs.
+   To fill the screen and keep the floating window, maximise instead (double-click the window's
+   title bar, or ⌥-click the green button).
 
 Settings worth knowing: the number of occurrences that get furigana is `FURIGANA_OCCURRENCES`
 in [frontend/js/config.js](frontend/js/config.js); backend limits are in

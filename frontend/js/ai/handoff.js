@@ -31,6 +31,19 @@ export async function copyPrompt(prompt) {
   }
 }
 
+// In full screen (macOS green button, or the page's own full screen), Chrome opens every pop-up
+// as a tab instead of a floating window. A page can't change that, so the UI says so.
+const FULL_SCREEN = window.matchMedia("(display-mode: fullscreen)");
+
+export function popupsOpenAsTabs() {
+  return FULL_SCREEN.matches || Boolean(document.fullscreenElement);
+}
+
+export function onFullScreenChange(callback) {
+  FULL_SCREEN.addEventListener("change", callback);
+  document.addEventListener("fullscreenchange", callback);
+}
+
 // A dialog-sized window floating over the middle of the app, not a split screen.
 function windowFeatures() {
   const { width, height, offsetTop } = AI_WINDOW;

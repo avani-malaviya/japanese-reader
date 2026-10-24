@@ -1,6 +1,12 @@
 // The Ask AI box: the sentence, an optional note, the (editable) template and the provider.
 
-import { askInWindow, loadProvider, saveProvider } from "../ai/handoff.js";
+import {
+  askInWindow,
+  loadProvider,
+  onFullScreenChange,
+  popupsOpenAsTabs,
+  saveProvider,
+} from "../ai/handoff.js";
 import { fillPrompt, loadTemplate, resetTemplate, saveTemplate, sentenceAround } from "../ai/prompt.js";
 import { AI_PROVIDERS } from "../config.js";
 import { el } from "./dom.js";
@@ -22,6 +28,15 @@ export function setupAskAiDialog({ status }) {
   let current = null; // { selection, sentence }
   let provider = loadProvider();
 
+  const fullScreenNotice = el(
+    "div",
+    "ask-ai__notice",
+    "The browser is in full screen, so the answer will open as a tab. " +
+      "For a floating window, exit full screen first (⌃⌘F).",
+  );
+  const updateNotice = () => (fullScreenNotice.hidden = !popupsOpenAsTabs());
+  onFullScreenChange(updateNotice);
+
   function close() {
     dialog.hidden = true;
     current = null;
@@ -33,11 +48,14 @@ export function setupAskAiDialog({ status }) {
     const { label } = AI_PROVIDERS[provider];
     const asking = askInWindow(provider, prompt); // synchronously opens the window
     close();
+    const asTab = popupsOpenAsTabs();
     const { opened, prefilled, copied } = await asking;
     if (!opened) {
       status.set("Pop-up blocked: allow pop-ups for this page, or paste the copied prompt");
     } else if (!prefilled) {
       status.set(`Opened ${label}. Prompt copied, paste it with ⌘V`);
+    } else if (asTab) {
+      status.set(`Asked ${label} in a new tab (full screen). Exit full screen (⌃⌘F) for a floating window`);
     } else {
       status.set(`Asked ${label} about ${selection}${copied ? " · prompt also copied" : ""}`);
     }
@@ -87,6 +105,9 @@ export function setupAskAiDialog({ status }) {
       providers.append(option);
     }
     body.append(providers);
+
+    updateNotice();
+    body.append(fullScreenNotice);
 
     const actions = el("div", "popup__actions");
     const sendButton = button("btn", "Send", "Send (⌘↵)", () => send(note.value, template.value));
