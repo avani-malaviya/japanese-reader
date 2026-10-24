@@ -20,6 +20,7 @@ Everything runs locally and uses only open-source models and open data.
 |---|---|
 | **Open image** | Upload a photo/scan from your computer. |
 | **OCR** | Detects text blocks (vertical *or* horizontal) and recognises them. Vertical text is converted to horizontal so every document reads the same way. One block → one paragraph. |
+| **Pictures** | Photos and illustrations on the page are cut out, dithered to pure black and white, and placed where they sat in the reading order: wide ones centred, narrow ones floated left/right with text wrapping around. Text inside a picture follows it as normal paragraphs. Delete a picture with Backspace. |
 | **Editor** | The OCR result lands in a simple word-processor page. Fix mistakes, delete noise, type freely. Paste is always plain text. Autosaved in the browser. |
 | **Reading** | Highlight text → a box appears beside it with the reading in hiragana. A single kanji shows *all* its readings (音 / 訓); a word shows its dictionary readings with the one that fits the sentence marked `◆ in context`. |
 | **Insert** | Adds the chosen reading as furigana *below* the selected text and the occurrences after it (5 in total). |
@@ -49,7 +50,10 @@ in [frontend/js/config.js](frontend/js/config.js); backend limits are in
  │ ui/lookup-popup.js ─┤     │ ─────────────►│                 ├ mokuro_engine.py           │
  │ ui/meaning-view.js  │     │               │                 │   comic-text-detector      │
  │ ui/statusbar.js     ▼     │               │                 │   + manga-ocr              │
- │               js/api.js   │               │                 └ layout.py  (reading order) │
+ │               js/api.js   │               │                 ├ figures/doclayout_detector │
+ │                           │               │                 │   DocLayout-YOLO (pictures)│
+ │                           │               │                 ├ layout.py  (reading order) │
+ │                           │               │                 └ images.py  (1-bit dither)  │
  │                           │ POST          │                                              │
  │ editor/editor.js          │  /api/reading │ api/lookup.py ─► services/reading.py         │
  │ editor/selection.js       │ ─────────────►│                 services/meaning.py          │
@@ -76,6 +80,7 @@ Dependencies point inward: `api → services`, `ui → editor`, `ui/editor → a
 | Purpose | Component | License |
 |---|---|---|
 | Text detection | [comic-text-detector](https://github.com/dmMaze/comic-text-detector) (via [mokuro](https://github.com/kha-white/mokuro)) | GPL-3.0 |
+| Picture detection | [DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO) (DocStructBench weights) | AGPL-3.0 |
 | Line OCR | [manga-ocr](https://github.com/kha-white/manga-ocr) (`kha-white/manga-ocr-base`) | Apache-2.0 |
 | Contextual reading | [fugashi](https://github.com/polm/fugashi) (MeCab) + UniDic | MIT / BSD |
 | Kanji readings | [KANJIDIC2](https://www.edrdg.org/wiki/index.php/KANJIDIC_Project) | CC BY-SA 4.0 |
@@ -95,6 +100,8 @@ backend/                     uv project (Python 3.12)
   app/config.py              limits and settings
   app/api/                   HTTP layer: ocr.py, lookup.py, schemas.py, health.py
   app/services/ocr/          base.py (OcrEngine interface), mokuro_engine.py, layout.py, service.py
+  app/services/figures/      base.py (FigureDetector interface), doclayout_detector.py
+  app/services/images.py     crop + 1-bit dither pictures
   app/services/reading.py    readings for a selection
   app/services/meaning.py    dictionary meanings for a selection
   app/services/analyzer.py   fugashi/UniDic tokenizer
@@ -149,7 +156,9 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
 - Selections must stay within one paragraph and be ≤ 50 characters.
 - The analyzer's contextual pick is occasionally debatable (日本 → にっぽん); all dictionary
   readings are always listed so you can choose.
-- One document at a time, stored in this browser only.
+- One document at a time, stored in this browser only. Pictures are stored inside it, so a
+  page with many large pictures can exceed browser storage (the status bar says so).
+- Picture placement approximates the page (order, width, side), not exact positions.
 
 ## Roadmap
 

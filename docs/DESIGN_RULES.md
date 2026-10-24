@@ -14,6 +14,8 @@ plain utilitarian chrome around it.
 - No other colours, no smooth gradients, no transparency effects, no blur.
 - 1-bit patterns are fine (striped title bar, dithered desktop) — built with hard-stop CSS
   gradients so they stay pure black and white.
+- Pictures from uploaded pages are shown **1-bit dithered** (Floyd–Steinberg), never in grey
+  or colour, framed with a 1px border.
 - Emphasis = **inversion** (white on black), never colour. Hover, active, selected, focused all invert.
 
 ### Shape
