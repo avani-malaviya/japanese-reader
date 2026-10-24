@@ -17,6 +17,15 @@ from app.services.ocr.base import Align, Box, TextBlock
 # A picture wider than this share of the content is centred; narrower ones float to a side.
 CENTER_ABOVE_RATIO = 0.6
 MIN_WIDTH_RATIO = 0.25
+# Cut into bands unless the column gutter is clearly wider: the gap between a photo and the
+# text beside it is often as narrow as the gap between steps, and those must stay paired.
+BAND_PREFERENCE = 2.0
+# A gutter narrower than this share of the content width is the gap between a picture and its
+# text, not between columns.
+MIN_GUTTER_RATIO = 0.015
+# Phone photos are skewed, so neighbouring blocks overlap slightly; an overlap smaller than this
+# share of a block's length still counts as a gap.
+OVERLAP_TOLERANCE = 0.15
 
 
 @dataclass(frozen=True)
@@ -36,28 +45,55 @@ def is_vertical_page(blocks: list[TextBlock]) -> bool:
     return vertical > 0 and vertical >= horizontal
 
 
-def _group_by_overlap(blocks: list[T], span: Callable[[T], tuple[float, float]]) -> list[list[T]]:
-    """Merge blocks whose spans (on one axis) overlap into groups, ordered by span start."""
+def _split(blocks: list[T], span: Callable[[T], tuple[float, float]]) -> tuple[list[list[T]], float]:
+    """Cut blocks in two at the widest empty gap along one axis. Returns the pieces in axis
+    order and the gap's width; one piece and 0 if there is no gap.
+
+    Cutting only at the widest gap (not at every gap) lets a wide gutter, such as the one before
+    a sidebar, be cut first, so narrower gaps inside the main column are judged on their own."""
     groups: list[list[T]] = []
+    gaps: list[float] = []
     group_end = float("-inf")
     for block in sorted(blocks, key=lambda b: span(b)[0]):
         start, end = span(block)
-        if groups and start < group_end:
+        if groups and start < group_end - OVERLAP_TOLERANCE * (end - start):
             groups[-1].append(block)
             group_end = max(group_end, end)
         else:
+            if groups:
+                gaps.append(max(0.0, start - group_end))
             groups.append([block])
             group_end = end
-    return groups
+    if not gaps:
+        return groups, 0.0
+    cut = max(range(len(gaps)), key=gaps.__getitem__) + 1
+    flatten = lambda part: [b for group in part for b in group]  # noqa: E731
+    return [flatten(groups[:cut]), flatten(groups[cut:])], gaps[cut - 1]
 
 
 def order_blocks(blocks: list[T], vertical: bool) -> list[T]:
-    if vertical:
-        tiers = _group_by_overlap(blocks, lambda b: (b.box.y1, b.box.y2))
-        return [b for tier in tiers for b in sorted(tier, key=lambda b: -b.box.x2)]
+    """Recursive XY-cut: split the page at its widest empty gap, across or down, and read the
+    pieces in order (bands top to bottom; columns left to right, or right to left for 縦書き).
+    Headers spanning several columns, sidebars and pictures beside text each stay together."""
+    if len(blocks) <= 1:
+        return list(blocks)
 
-    columns = _group_by_overlap(blocks, lambda b: (b.box.x1, b.box.x2))
-    return [b for column in columns for b in sorted(column, key=lambda b: b.box.y1)]
+    bands, band_gap = _split(blocks, lambda b: (b.box.y1, b.box.y2))
+    columns, column_gap = _split(blocks, lambda b: (b.box.x1, b.box.x2))
+    if vertical:
+        columns.reverse()
+
+    width = max(b.box.x2 for b in blocks) - min(b.box.x1 for b in blocks)
+    narrow_gutter = column_gap < MIN_GUTTER_RATIO * width
+    if len(bands) > 1 and (narrow_gutter or band_gap * BAND_PREFERENCE >= column_gap):
+        pieces = bands
+    elif len(columns) > 1:
+        pieces = columns
+    else:
+        # Overlapping blocks with no clean gap: fall back to plain reading direction.
+        key = (lambda b: -b.box.x2) if vertical else (lambda b: b.box.y1)
+        return sorted(blocks, key=key)
+    return [b for piece in pieces for b in order_blocks(piece, vertical)]
 
 
 def place_figure(box: Box, content: Box) -> PlacedFigure:

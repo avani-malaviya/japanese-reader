@@ -1,5 +1,10 @@
+import json
+from pathlib import Path
+
 from app.services.ocr.base import Box, TextBlock
 from app.services.ocr.layout import PlacedFigure, arrange, is_vertical_page
+
+FIXTURES = Path(__file__).parent / "fixtures"
 
 
 def block(text: str, x1: float, y1: float, x2: float, y2: float, vertical: bool) -> TextBlock:
@@ -66,6 +71,33 @@ def test_text_inside_a_figure_follows_it() -> None:
     ]
     figure = Box(0, 100, 1000, 600)
     assert labels(arrange(blocks, [figure])) == ["[図]", "看板", "本文"]
+
+
+def test_how_to_page_pairs_each_photo_with_its_step_and_keeps_sidebar_together() -> None:
+    # Shaped like a gardening how-to page: header across the top, steps of photo + text
+    # (the text starting a few px above its photo), a sidebar, and a full-width chart below.
+    blocks = [
+        block("見出し", 0, 0, 1000, 60, vertical=False),
+        block("手順1", 360, 95, 700, 160, vertical=False),
+        block("手順2", 360, 345, 700, 420, vertical=False),
+        block("豆知識", 760, 330, 1000, 600, vertical=False),
+    ]
+    photo1, photo2, chart = Box(0, 100, 340, 300), Box(0, 350, 340, 550), Box(0, 700, 1000, 900)
+    assert labels(arrange(blocks, [photo1, photo2, chart])) == [
+        "見出し", "[図]", "手順1", "[図]", "手順2", "豆知識", "[図]",
+    ]
+
+
+def test_skewed_phone_photo_of_a_how_to_page() -> None:
+    # Boxes detected on a real phone photo (slightly skewed) of a gardening book page:
+    # five step photos, each with its text to the right, and two sidebars further right.
+    data = json.loads((FIXTURES / "howto_page_photo_boxes.json").read_text())
+    blocks = [TextBlock(Box(*b[:4]), vertical=b[4], lines=[b[5]]) for b in data["blocks"]]
+    order = labels(arrange(blocks, [Box(*f) for f in data["figures"]]))
+    steps = ["ラッカセイは肥料が多すぎ", "１ヶ所に対して２粒のタネ", "本葉が２枚程度になったタ", "花が咲きはじめたら、子房"]
+    for step in steps:
+        assert order[order.index(step) - 1] == "[図]", f"{step} should follow its photo"
+    assert order.index("裁培の豆知識土が乾燥して") > order.index("本葉が２枚程度になったタ")
 
 
 def test_wide_figures_are_centred_and_narrow_ones_float_to_their_side() -> None:
