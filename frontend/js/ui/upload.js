@@ -28,6 +28,9 @@ export function setupUpload({ button, input, editor, status }) {
     status.progress(`Reading ${file.name}`);
     try {
       const { items } = await ocrImage(file);
+      if (!Array.isArray(items)) {
+        throw new Error("Unexpected reply from server. Reload the page and try again");
+      }
       editor.setItems(items);
       status.set(items.length ? summary(file.name, items) : `Nothing found in ${file.name}`);
     } catch (error) {

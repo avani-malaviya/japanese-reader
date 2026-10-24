@@ -57,6 +57,7 @@ def test_serves_frontend(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200
     assert "text/html" in response.headers["content-type"]
+    assert client.get("/js/main.js").headers["cache-control"] == "no-cache"
 
 
 def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
