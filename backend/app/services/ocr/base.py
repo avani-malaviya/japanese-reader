@@ -31,8 +31,22 @@ class TextBlock:
 
 
 @dataclass(frozen=True)
+class Paragraph:
+    text: str
+
+
+PageItem = Paragraph
+
+
+@dataclass(frozen=True)
 class OcrResult:
-    paragraphs: list[str]
+    """The page as a document: items in reading order."""
+
+    items: list[PageItem]
+
+    @property
+    def paragraphs(self) -> list[str]:
+        return [item.text for item in self.items if isinstance(item, Paragraph)]
 
     @property
     def text(self) -> str:

@@ -15,9 +15,9 @@ export function setupUpload({ button, input, editor, status }) {
     button.disabled = true;
     status.progress(`Reading ${file.name}`);
     try {
-      const { paragraphs } = await ocrImage(file);
-      editor.setParagraphs(paragraphs);
-      status.set(paragraphs.length ? `Read ${file.name}` : `No text found in ${file.name}`);
+      const { items } = await ocrImage(file);
+      editor.setItems(items);
+      status.set(items.length ? `Read ${file.name}` : `No text found in ${file.name}`);
     } catch (error) {
       status.set(`Error: ${error.message}`);
     } finally {

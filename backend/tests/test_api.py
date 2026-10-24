@@ -45,7 +45,10 @@ def test_serves_frontend(client: TestClient) -> None:
 def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
     response = client.post("/api/ocr", files={"image": ("page.png", image_bytes(), "image/png")})
     assert response.status_code == 200
-    assert response.json() == {"paragraphs": ["一番目", "二番目"], "text": "一番目\n\n二番目"}
+    assert response.json() == {
+        "items": [{"type": "paragraph", "text": "一番目"}, {"type": "paragraph", "text": "二番目"}],
+        "text": "一番目\n\n二番目",
+    }
 
 
 def test_ocr_accepts_heic(client: TestClient) -> None:

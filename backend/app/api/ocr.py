@@ -2,7 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from app.api.schemas import OcrResponse
+from app.api.schemas import OcrResponse, ParagraphOut
 from app.config import MAX_UPLOAD_BYTES
 from app.services.ocr.base import OcrEngine
 from app.services.ocr.mokuro_engine import get_engine
@@ -28,4 +28,4 @@ def ocr(
         result = read_page(engine, data)
     except InvalidImageError as error:
         raise HTTPException(status_code=400, detail=str(error)) from error
-    return OcrResponse(paragraphs=result.paragraphs, text=result.text)
+    return OcrResponse(items=[ParagraphOut(text=p) for p in result.paragraphs], text=result.text)

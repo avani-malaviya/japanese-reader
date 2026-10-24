@@ -3,6 +3,12 @@
 import { AUTOSAVE_DELAY_MS } from "../config.js";
 import { loadDocument, saveDocument } from "./storage.js";
 
+function renderItem(item) {
+  const p = document.createElement("p");
+  p.textContent = item.text;
+  return p;
+}
+
 export function createEditor(el, { onChange } = {}) {
   let saveTimer = null;
 
@@ -12,14 +18,9 @@ export function createEditor(el, { onChange } = {}) {
     onChange?.();
   }
 
-  function setParagraphs(paragraphs) {
-    el.replaceChildren(
-      ...paragraphs.map((text) => {
-        const p = document.createElement("p");
-        p.textContent = text;
-        return p;
-      }),
-    );
+  // Replaces the document with OCR items: [{ type: "paragraph", text }, ...].
+  function setItems(items) {
+    el.replaceChildren(...items.map(renderItem));
     changed();
   }
 
@@ -46,7 +47,7 @@ export function createEditor(el, { onChange } = {}) {
 
   return {
     el,
-    setParagraphs,
+    setItems,
     changed,
 
     // Plain text without furigana (<rt>), for counting and lookups.

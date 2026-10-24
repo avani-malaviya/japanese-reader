@@ -7,7 +7,7 @@ The page's orientation is whichever orientation covers more block area.
 
 from collections.abc import Callable
 
-from app.services.ocr.base import OcrResult, TextBlock
+from app.services.ocr.base import OcrResult, Paragraph, TextBlock
 
 
 def is_vertical_page(blocks: list[TextBlock]) -> bool:
@@ -43,5 +43,4 @@ def order_blocks(blocks: list[TextBlock]) -> list[TextBlock]:
 
 
 def to_result(blocks: list[TextBlock]) -> OcrResult:
-    paragraphs = [b.text for b in order_blocks(blocks) if b.text]
-    return OcrResult(paragraphs=paragraphs)
+    return OcrResult(items=[Paragraph(b.text) for b in order_blocks(blocks) if b.text])
