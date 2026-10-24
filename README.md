@@ -18,6 +18,7 @@ Everything runs locally and uses only open-source models and open data.
 
 | Feature | What it does |
 |---|---|
+| **Library desktop** | The app opens on a pastel retro desktop. Make a folder per book, or one for pamphlets (**[ NEW FOLDER ]**); open it to see its documents; **New document** starts a pamphlet or a chapter. Rename (F2) and delete (Delete) folders and documents. Everything is saved on your machine (SQLite), so documents and pictures are no longer limited by browser storage. |
 | **Open image** | Upload a photo/scan from your computer. Each new page is **added at the cursor** (after a dashed page break), so press Enter at the end and open the next page. **[ NEW ]** starts over. |
 | **OCR** | Detects text (vertical *or* horizontal) and recognises it. Vertical text is converted to horizontal so every document reads the same way. |
 | **Page structure** | The page is recreated in one house style: the page title becomes a heading, subtitles become subheadings, captions are styled as captions, and **columns and sidebars stay side by side**. Page furniture (page numbers, margin tabs, running headers) is left out. |
@@ -32,6 +33,8 @@ Everything runs locally and uses only open-source models and open data.
 
 ## Using it
 
+0. On the desktop, double-click a folder (or make one with **[ NEW FOLDER ]**), then **New document**
+   (or double-click an existing one). **[ ◂ DESKTOP ]** in the editor goes back; work is autosaved.
 1. **[ OPEN IMAGE… ]** → pick a photo. The status bar shows progress; the first read of a session
    takes ~30 s while models load, then a few seconds per page. For a multi-page text, put the
    cursor at the end (or press Enter there) and open the next page.
@@ -119,6 +122,8 @@ backend/                     uv project (Python 3.12)
   app/services/analyzer.py   fugashi/UniDic tokenizer
   app/services/dictionary.py JMdict + KANJIDIC2
   app/services/kana.py       kana helpers
+  app/services/library.py    folders + documents in SQLite (backend/data/library.sqlite)
+  app/api/library.py         /api/folders, /api/documents
   tests/                     pytest; OCR API tests use a fake engine
 
 frontend/                    served as-is, no build
@@ -132,6 +137,9 @@ frontend/                    served as-is, no build
   js/ui/                     around the document: upload, lookup popup, meaning view, status bar,
                              picture controls, Ask AI box
   js/ai/                     Ask AI: prompt template, handoff to ChatGPT / Claude
+  js/desktop/                the library desktop: icons, folder windows, dialogs, clock
+  js/screens/                the editor screen (open / autosave a library document)
+  js/router.js               #/ desktop · #/folder/<id> · #/doc/<id>
 ```
 
 ## Running locally ("deployment")
@@ -170,8 +178,8 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
 - Selections must stay within one paragraph and be ≤ 50 characters.
 - The analyzer's contextual pick is occasionally debatable (日本 → にっぽん); all dictionary
   readings are always listed so you can choose.
-- One document at a time, stored in this browser only. Pictures are stored inside it, so a
-  page with many large pictures can exceed browser storage (the status bar says so).
+- The library lives in one file, `backend/data/library.sqlite`. Back it up by copying that file
+  (with the server stopped). Folders are one level deep.
 - Layout is a structural recreation (order, headings, columns, picture size and side), not exact
   positions. Heading detection relies on the layout model plus text size; unusual designs can
   produce a missed or extra heading, which you can retype as normal text.
@@ -203,6 +211,13 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
 - [x] Printed furigana → ruby
 - [x] Page structure: headings, captions, page furniture, columns
 - [x] Ask AI: grammar template handed to your ChatGPT / Claude account
+
+**v0.3 (done)**
+
+- [x] Library: folders and documents saved on the server (SQLite)
+- [x] Retro pastel desktop landing page, folder windows, dialogs
+
+**Next on the desktop**: writing tool, kanji tool, opening several documents as windows.
 
 **Later ideas**
 

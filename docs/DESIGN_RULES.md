@@ -5,10 +5,27 @@ and say why.
 
 ## 1. Visual
 
-The feel: **a Kindle crossed with a 2000s desktop application.** Calm paper page in the middle,
-plain utilitarian chrome around it.
+The app has **two surfaces**, each with its own palette:
 
-### Colour
+- **Desktop** (the library, `#/`): a pastel retro PC desktop, after a 2000s OS. Folders, programs,
+  windows, dialogs.
+- **Document** (the editor, `#/doc/<id>`): **a Kindle crossed with a 2000s desktop application.**
+  Calm paper page in the middle, plain utilitarian chrome around it.
+
+Never mix them: no pastel in the editor, no plain black-and-white chrome on the desktop.
+
+### Desktop colour
+- Surfaces: mint `--desk-mint` / `--desk-mint-light` (desktop, dithered together), cream
+  `--desk-cream` (window bodies, menu bar, labels), pinks `--desk-pink-light` / `--desk-pink` /
+  `--desk-pink-deep` (title-bar stripes, toolbars, folder icons, inputs).
+- Ink: `--desk-ink` (blue) for every line and all text; `--desk-ink-soft` for secondary text.
+- Accents: `--desk-lavender` / `--desk-purple`, only inside pixel icons (shading, stands).
+- Selection = blue label with cream text (`--desk-ink` on `--desk-cream`), like an old OS.
+- Borders 2px ink; hard offset shadow `--desk-shadow`; square corners; no animation; patterns are
+  hard-stop (1-bit style) like the document surface.
+- Icons are 16×16 pixel drawings (`js/desktop/icons.js`) coloured only through `.px-*` classes.
+
+### Document colour
 - Only `--ink` (`#000`) and `--paper` (`#fff`). One grey, `--muted` (`#808080`), for disabled
   or secondary text only.
 - No other colours, no smooth gradients, no transparency effects, no blur.
