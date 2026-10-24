@@ -4,6 +4,7 @@ import threading
 
 from PIL import Image
 
+from app.services.inference import gpu_lock
 from app.services.ocr.base import Box
 
 MODEL_REPO = "juliozhao/DocLayout-YOLO-DocStructBench"
@@ -26,9 +27,10 @@ class DocLayoutDetector:
         self._device = "mps" if torch.backends.mps.is_available() else "cpu"
 
     def detect(self, image: Image.Image) -> list[Box]:
-        result = self._model.predict(
-            image, imgsz=INPUT_SIZE, conf=MIN_SCORE, device=self._device, verbose=False
-        )[0]
+        with gpu_lock:
+            result = self._model.predict(
+                image, imgsz=INPUT_SIZE, conf=MIN_SCORE, device=self._device, verbose=False
+            )[0]
         min_area = image.width * image.height * MIN_AREA_RATIO
         boxes = [
             Box(*coords)

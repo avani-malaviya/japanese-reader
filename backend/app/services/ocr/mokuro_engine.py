@@ -5,6 +5,7 @@ import threading
 
 from PIL import Image
 
+from app.services.inference import gpu_lock
 from app.services.ocr.base import Box, TextBlock
 
 
@@ -19,7 +20,8 @@ class MokuroEngine:
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
         buffer.seek(0)
-        result = self._ocr(buffer)
+        with gpu_lock:
+            result = self._ocr(buffer)
         return [
             TextBlock(box=Box(*block["box"]), vertical=bool(block["vertical"]), lines=block["lines"])
             for block in result["blocks"]
