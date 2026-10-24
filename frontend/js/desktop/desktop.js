@@ -5,7 +5,12 @@ import { loadProvider, showChatWindow } from "../ai/handoff.js";
 import { el } from "../ui/dom.js";
 import { startClock } from "./clock.js";
 import { alertDialog, confirmDialog, promptDialog } from "./dialogs.js";
+import { openFolderWindow } from "./folder-window.js";
 import { chatIcon, folderIcon } from "./icons.js";
+
+// New windows cascade down and to the right from here.
+const FIRST_WINDOW = { x: 160, y: 24 };
+const CASCADE = 28;
 
 function plural(count, word) {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -21,11 +26,37 @@ export function setupDesktopScreen({ root }) {
 
   const icons = el("div", "desk-icons");
   icons.setAttribute("role", "listbox");
-  root.replaceChildren(menubar, icons);
+  const windowLayer = el("div", "desk-windows");
+  const area = el("div", "desk-area");
+  area.append(icons, windowLayer);
+  root.replaceChildren(menubar, area);
   startClock(clock);
 
   let folders = [];
   let selected = null; // the selected icon element
+  const windows = new Map(); // folder id -> open folder window
+  let topZ = 1;
+
+  function bringToFront(win) {
+    win.el.style.zIndex = String(++topZ);
+    win.el.focus();
+  }
+
+  function openFolder(folder) {
+    const open = windows.get(folder.id);
+    if (open) return bringToFront(open);
+    const offset = (windows.size % 8) * CASCADE;
+    const win = openFolderWindow({
+      folder,
+      layer: windowLayer,
+      position: { x: FIRST_WINDOW.x + offset, y: FIRST_WINDOW.y + offset },
+      onFolderChanged: refresh,
+      onClose: () => windows.delete(folder.id),
+    });
+    win.el.addEventListener("pointerdown", () => bringToFront(win));
+    windows.set(folder.id, win);
+    bringToFront(win);
+  }
 
   function select(icon) {
     selected?.setAttribute("aria-selected", "false");
@@ -65,7 +96,7 @@ export function setupDesktopScreen({ root }) {
         label: folder.name,
         title: `${folder.name} · ${plural(folder.document_count, "document")}`,
         folder,
-        onOpen: () => {},
+        onOpen: () => openFolder(folder),
       }),
     );
     const programs = [
@@ -78,6 +109,15 @@ export function setupDesktopScreen({ root }) {
   async function refresh() {
     folders = await listFolders();
     render();
+    // Keep open windows in step: renamed folders retitled, deleted ones closed.
+    for (const [id, win] of windows) {
+      const folder = folders.find((f) => f.id === id);
+      if (folder) win.rename(folder);
+      else {
+        win.el.remove();
+        windows.delete(id);
+      }
+    }
   }
 
   async function newFolder() {
@@ -121,10 +161,14 @@ export function setupDesktopScreen({ root }) {
   });
 
   return {
-    async show() {
+    // `folderId`: open that folder's window, e.g. when coming back from one of its documents.
+    async show(folderId = null) {
       root.hidden = false;
       window.document.title = "Japanese Reader";
       await refresh();
+      for (const win of windows.values()) win.refresh(); // documents may have changed meanwhile
+      const folder = folders.find((f) => f.id === folderId);
+      if (folder) openFolder(folder);
     },
     hide() {
       root.hidden = true;

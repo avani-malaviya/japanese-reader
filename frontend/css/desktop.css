@@ -247,3 +247,65 @@
   background: var(--desk-ink);
   color: var(--desk-cream);
 }
+
+/* ---- folder windows ---- */
+.desk-area {
+  position: relative;
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.desk-windows {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* clicks pass through to the icons, except on windows */
+}
+
+.folder-window {
+  position: absolute;
+  width: min(560px, calc(100vw - 2 * var(--space-3)));
+  height: min(400px, calc(100% - 2 * var(--space-3)));
+  pointer-events: auto;
+}
+
+.folder-window:focus {
+  outline: none;
+}
+
+.folder-window__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--desk-ink);
+  background: var(--desk-pink-light);
+}
+
+.folder-window__info {
+  margin-left: auto;
+  color: var(--desk-ink-soft);
+  text-transform: uppercase;
+}
+
+.folder-window__list {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  overflow-y: auto;
+}
+
+.folder-window__empty {
+  margin: auto;
+  color: var(--desk-ink-soft);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.file-icon__date {
+  color: var(--desk-ink-soft);
+  font-size: 10px;
+}
