@@ -1,4 +1,4 @@
-// Owns the document element: one <p> per paragraph, editable, autosaved.
+// Owns the document element: blocks (<p>, <figure>, page breaks), editable, autosaved.
 
 import { AUTOSAVE_DELAY_MS } from "../config.js";
 import { loadDocument, saveDocument } from "./storage.js";
@@ -23,8 +23,13 @@ function renderItem(item) {
   return p;
 }
 
+function isEmptyParagraph(node) {
+  return node?.tagName === "P" && node.textContent.trim() === "" && !node.querySelector("img");
+}
+
 export function createEditor(el, { onChange, onSaveFailed } = {}) {
   let saveTimer = null;
+  let caret = null; // last caret position inside the document, kept while toolbar buttons have focus
 
   function changed() {
     clearTimeout(saveTimer);
@@ -34,12 +39,63 @@ export function createEditor(el, { onChange, onSaveFailed } = {}) {
     onChange?.();
   }
 
-  // Replaces the document with OCR items: paragraphs ({ type, text }) and
-  // pictures ({ type, src, width_ratio, align }), in reading order.
-  function setItems(items) {
-    el.replaceChildren(...items.map(renderItem));
+  function hasContent() {
+    return el.textContent.trim() !== "" || el.querySelector("figure") !== null;
+  }
+
+  // The top-level block holding the caret, or null if the caret isn't in the document.
+  function caretBlock() {
+    if (!caret || !el.contains(caret.startContainer)) return null;
+    let node = caret.startContainer;
+    // A caret between top-level blocks: the block before it.
+    if (node === el) return el.childNodes[caret.startOffset - 1] ?? null;
+    while (node && node.parentNode !== el) node = node.parentNode;
+    return node;
+  }
+
+  /**
+   * Adds a page of OCR items, paragraphs ({ type, text }) and pictures
+   * ({ type, src, width_ratio, align }), after the block holding the caret, or at the end.
+   * An empty paragraph at the caret (the user just pressed Enter) is replaced.
+   */
+  function insertPage(items) {
+    const nodes = items.map(renderItem);
+    if (!hasContent()) {
+      el.replaceChildren(...nodes);
+    } else {
+      const pageBreak = document.createElement("hr");
+      pageBreak.className = "page-break";
+      const anchor = caretBlock();
+      if (isEmptyParagraph(anchor)) {
+        anchor.replaceWith(pageBreak, ...nodes);
+      } else if (anchor) {
+        anchor.after(pageBreak, ...nodes);
+      } else {
+        el.append(pageBreak, ...nodes);
+      }
+    }
+    // The next page goes after this one.
+    const last = nodes.at(-1);
+    if (last) {
+      caret = document.createRange();
+      caret.setStartAfter(last);
+      last.scrollIntoView({ block: "nearest" });
+    }
     changed();
   }
+
+  function clear() {
+    el.replaceChildren();
+    caret = null;
+    changed();
+  }
+
+  document.addEventListener("selectionchange", () => {
+    const selection = window.getSelection();
+    if (selection.rangeCount && el.contains(selection.anchorNode)) {
+      caret = selection.getRangeAt(0).cloneRange();
+    }
+  });
 
   el.contentEditable = "true";
   el.spellcheck = false;
@@ -64,18 +120,16 @@ export function createEditor(el, { onChange, onSaveFailed } = {}) {
 
   return {
     el,
-    setItems,
+    insertPage,
+    clear,
     changed,
+    hasContent,
 
     // Plain text without furigana (<rt>), for counting and lookups.
     getText() {
       const clone = el.cloneNode(true);
       clone.querySelectorAll("rt").forEach((rt) => rt.remove());
       return clone.innerText.trim();
-    },
-
-    isEmpty() {
-      return this.getText().length === 0;
     },
   };
 }

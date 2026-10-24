@@ -1,5 +1,6 @@
 import { createEditor } from "./editor/editor.js";
 import { setupLookupPopup } from "./ui/lookup-popup.js";
+import { setupNewDocument } from "./ui/new-document.js";
 import { createStatusbar } from "./ui/statusbar.js";
 import { setupUpload } from "./ui/upload.js";
 
@@ -16,6 +17,12 @@ const editor = createEditor(document.getElementById("document"), {
 function updateCount() {
   status.setCount(editor.getText().replace(/\s/g, "").length);
 }
+
+setupNewDocument({
+  button: document.getElementById("new-document"),
+  editor,
+  status,
+});
 
 setupUpload({
   button: document.getElementById("open-image"),

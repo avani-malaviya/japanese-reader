@@ -20,10 +20,6 @@ export function setupUpload({ button, input, editor, status }) {
     input.value = ""; // allow picking the same file again
     if (!file) return;
 
-    if (!editor.isEmpty() && !confirm("Replace the current document with this image's text?")) {
-      return;
-    }
-
     button.disabled = true;
     status.progress(`Reading ${file.name}`);
     try {
@@ -31,7 +27,7 @@ export function setupUpload({ button, input, editor, status }) {
       if (!Array.isArray(items)) {
         throw new Error("Unexpected reply from server. Reload the page and try again");
       }
-      editor.setItems(items);
+      editor.insertPage(items);
       status.set(items.length ? summary(file.name, items) : `Nothing found in ${file.name}`);
     } catch (error) {
       status.set(`Error: ${error.message}`);
