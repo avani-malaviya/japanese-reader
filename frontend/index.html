@@ -10,13 +10,15 @@
   <link rel="stylesheet" href="css/components.css">
 </head>
 <body>
-  <div class="window">
+  <div id="desktop" class="desktop" hidden></div>
+
+  <div class="window" id="editor-screen" hidden>
     <header class="titlebar">
-      <span class="titlebar__title">Japanese Reader v0.1</span>
+      <span class="titlebar__title" id="editor-title">Japanese Reader</span>
     </header>
 
     <nav class="toolbar">
-      <button class="btn" id="new-document" type="button">New</button>
+      <button class="btn" id="to-desktop" type="button" title="Back to the library">◂ Desktop</button>
       <button class="btn" id="open-image" type="button" title="Adds the page at the cursor">Open Image…</button>
       <input id="image-input" type="file" accept="image/*,.heic,.heif" hidden>
       <button class="btn" id="ai-chat" type="button" title="Show the AI chat window">AI Chat</button>
@@ -29,7 +31,7 @@
 
     <footer class="statusbar">
       <span id="status-message">Ready</span>
-      <span id="status-count">0 chars</span>
+      <span><span id="status-save"></span> <span id="status-count">0 chars</span></span>
     </footer>
   </div>
 

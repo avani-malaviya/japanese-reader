@@ -126,6 +126,7 @@ export function setupAskAiDialog({ status }) {
   });
 
   return {
+    close,
     open({ text, context, offset }) {
       current = { selection: text, sentence: sentenceAround(context, offset) };
       render();

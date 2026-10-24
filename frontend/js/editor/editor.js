@@ -1,8 +1,8 @@
-// Owns the document element: blocks (<p>, <figure>, page breaks), editable, autosaved.
+// Owns the document element: blocks (<p>, <figure>, page breaks), editable, autosaved through
+// `onSave(html)` (the library), which returns a promise.
 
 import { AUTOSAVE_DELAY_MS } from "../config.js";
 import { createRuby } from "./furigana.js";
-import { loadDocument, saveDocument } from "./storage.js";
 
 // A picture is one uneditable unit in the text flow: Backspace deletes it whole.
 function renderFigure({ src, width_ratio, align }) {
@@ -61,15 +61,39 @@ function isEmptyParagraph(node) {
   return ["P", "H1", "H2"].includes(node?.tagName) && node.textContent.trim() === "" && !node.querySelector("img");
 }
 
-export function createEditor(el, { onChange, onSaveFailed } = {}) {
+export function createEditor(el, { onChange, onSave }) {
   let saveTimer = null;
+  let saving = Promise.resolve(); // saves run one after another, in order
   let caret = null; // last caret position inside the document, kept while toolbar buttons have focus
+
+  function save() {
+    saveTimer = null;
+    const html = el.innerHTML;
+    saving = saving.then(() => onSave(html));
+    return saving;
+  }
 
   function changed() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => {
-      if (!saveDocument(el.innerHTML)) onSaveFailed?.();
-    }, AUTOSAVE_DELAY_MS);
+    saveTimer = setTimeout(save, AUTOSAVE_DELAY_MS);
+    onChange?.();
+  }
+
+  /** Saves any change still waiting for the autosave delay. */
+  function flush() {
+    if (saveTimer !== null) {
+      clearTimeout(saveTimer);
+      return save();
+    }
+    return saving;
+  }
+
+  /** Shows a saved document. Call `flush()` first so the previous one isn't lost. */
+  function open(html) {
+    clearTimeout(saveTimer);
+    saveTimer = null;
+    el.innerHTML = html;
+    caret = null;
     onChange?.();
   }
 
@@ -118,12 +142,6 @@ export function createEditor(el, { onChange, onSaveFailed } = {}) {
     changed();
   }
 
-  function clear() {
-    el.replaceChildren();
-    caret = null;
-    changed();
-  }
-
   document.addEventListener("selectionchange", () => {
     const selection = window.getSelection();
     if (selection.rangeCount && el.contains(selection.anchorNode)) {
@@ -149,13 +167,11 @@ export function createEditor(el, { onChange, onSaveFailed } = {}) {
     }
   });
 
-  const saved = loadDocument();
-  if (saved) el.innerHTML = saved;
-
   return {
     el,
     insertPage,
-    clear,
+    open,
+    flush,
     changed,
     hasContent,
 

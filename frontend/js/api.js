@@ -19,7 +19,7 @@ async function request(path, options) {
     }
     throw new Error(detail);
   }
-  return response.json();
+  return response.status === 204 ? null : response.json();
 }
 
 export async function startSession() {
@@ -27,13 +27,15 @@ export async function startSession() {
   pageBuild = response.headers.get("X-App-Build");
 }
 
-function postJson(path, payload) {
+function sendJson(method, path, payload) {
   return request(path, {
-    method: "POST",
+    method,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 }
+
+const postJson = (path, payload) => sendJson("POST", path, payload);
 
 export function getReadings({ text, context, offset }) {
   return postJson("/reading", { text, context, offset });
@@ -48,3 +50,18 @@ export function ocrImage(file) {
   body.append("image", file);
   return request("/ocr", { method: "POST", body });
 }
+
+// ---- library ----
+
+export const listFolders = () => request("/folders");
+export const createFolder = (name) => postJson("/folders", { name });
+export const renameFolder = (id, name) => sendJson("PATCH", `/folders/${id}`, { name });
+export const deleteFolder = (id) => request(`/folders/${id}`, { method: "DELETE" });
+
+export const listDocuments = (folderId) => request(`/folders/${folderId}/documents`);
+export const createDocument = (folderId, title) =>
+  postJson(`/folders/${folderId}/documents`, { title });
+export const getDocument = (id) => request(`/documents/${id}`);
+export const saveDocument = (id, html) => sendJson("PUT", `/documents/${id}`, { html });
+export const renameDocument = (id, title) => sendJson("PATCH", `/documents/${id}`, { title });
+export const deleteDocument = (id) => request(`/documents/${id}`, { method: "DELETE" });

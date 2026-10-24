@@ -190,4 +190,6 @@ export function setupFigureControls({ editor, scroller, status }) {
     if (selected && !editor.el.contains(selected)) deselect();
     else place();
   });
+
+  return { deselect };
 }

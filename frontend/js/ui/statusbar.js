@@ -1,6 +1,6 @@
 const PROGRESS_CELLS = 8;
 
-export function createStatusbar({ messageEl, countEl }) {
+export function createStatusbar({ messageEl, countEl, saveEl }) {
   let progressTimer = null;
 
   function stopProgress() {
@@ -25,6 +25,11 @@ export function createStatusbar({ messageEl, countEl }) {
       };
       render();
       progressTimer = setInterval(render, 250);
+    },
+
+    // "Saved", "Saving…" or "Not saved", beside the character count.
+    setSaveState(text) {
+      saveEl.textContent = text;
     },
 
     setCount(chars) {
