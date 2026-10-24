@@ -1,6 +1,6 @@
 // The Ask AI box: the sentence, an optional note, the (editable) template and the provider.
 
-import { copyPrompt, loadProvider, saveProvider } from "../ai/handoff.js";
+import { askInWindow, loadProvider, saveProvider } from "../ai/handoff.js";
 import { fillPrompt, loadTemplate, resetTemplate, saveTemplate, sentenceAround } from "../ai/prompt.js";
 import { AI_PROVIDERS } from "../config.js";
 import { el } from "./dom.js";
@@ -30,9 +30,17 @@ export function setupAskAiDialog({ status }) {
   async function send(note, template) {
     const { selection, sentence } = current;
     const prompt = fillPrompt(template, { selection, sentence, note });
-    const copied = await copyPrompt(prompt);
+    const { label } = AI_PROVIDERS[provider];
+    const asking = askInWindow(provider, prompt); // synchronously opens the window
     close();
-    status.set(copied ? `Prompt about ${selection} copied` : "Could not copy the prompt");
+    const { opened, prefilled, copied } = await asking;
+    if (!opened) {
+      status.set("Pop-up blocked: allow pop-ups for this page, or paste the copied prompt");
+    } else if (!prefilled) {
+      status.set(`Opened ${label}. Prompt copied, paste it with ⌘V`);
+    } else {
+      status.set(`Asked ${label} about ${selection}${copied ? " · prompt also copied" : ""}`);
+    }
   }
 
   function render() {

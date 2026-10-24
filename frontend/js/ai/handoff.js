@@ -1,7 +1,7 @@
 // Hands a question to the user's own ChatGPT or Claude account. No API: the app never talks to
 // an AI service itself; the user's browser opens the provider's site with the prompt filled in.
 
-import { AI_PROVIDERS } from "../config.js";
+import { AI_MAX_URL_LENGTH, AI_PROVIDERS, AI_WINDOW } from "../config.js";
 
 const PROVIDER_KEY = "japanese-reader:ai-provider";
 
@@ -29,4 +29,35 @@ export async function copyPrompt(prompt) {
   } catch {
     return false;
   }
+}
+
+// A dialog-sized window floating over the middle of the app, not a split screen.
+function windowFeatures() {
+  const { width, height, offsetTop } = AI_WINDOW;
+  const left = Math.round(window.screenX + (window.outerWidth - width) / 2);
+  const top = Math.round(window.screenY + offsetTop);
+  return `popup,width=${width},height=${height},left=${left},top=${top}`;
+}
+
+// The one AI window, found again by name for every question, even after this page reloads.
+// That lookup needs the window's link back to this tab (window.opener), so it is kept; the only
+// pages ever opened in it are ChatGPT and Claude.
+function openAiWindow(url) {
+  const win = window.open(url, AI_WINDOW.name, windowFeatures());
+  win?.focus();
+  return win;
+}
+
+/**
+ * Opens the provider with the prompt filled in. Must be called straight from a click, before
+ * any await, or the browser blocks the window. Resolves to { opened, prefilled, copied }.
+ */
+export async function askInWindow(providerId, prompt) {
+  const provider = AI_PROVIDERS[providerId];
+  // Copy first: once the new window takes focus, this page may no longer write the clipboard.
+  const copying = copyPrompt(prompt);
+  const url = provider.ask(prompt);
+  const prefilled = url.length <= AI_MAX_URL_LENGTH;
+  const win = openAiWindow(prefilled ? url : provider.newChat);
+  return { opened: Boolean(win), prefilled, copied: await copying };
 }
