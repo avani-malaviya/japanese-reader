@@ -1,12 +1,29 @@
 from app.services.ocr.base import Box
-from app.services.ocr.layout import PlacedFigure, arrange, is_vertical_page
+from app.services.ocr.layout import Columns, PlacedFigure, arrange, is_vertical_page
 from app.services.ocr.structure import build_units
 from app.services.regions.base import picture_boxes
 from tests.factories import block, block_of, line, load_page
 
 
-def labels(elements: list) -> list[str]:
-    return ["[図]" if isinstance(e, PlacedFigure) else e.text for e in elements]
+def labels(nodes: list) -> list[str]:
+    """Reading order, with rows of columns read column by column."""
+    out: list[str] = []
+    for node in nodes:
+        if isinstance(node, Columns):
+            out.extend(label for column in node.columns for label in labels(column.children))
+        else:
+            out.append("[図]" if isinstance(node, PlacedFigure) else node.text)
+    return out
+
+
+def figures(nodes: list) -> list[PlacedFigure]:
+    found: list[PlacedFigure] = []
+    for node in nodes:
+        if isinstance(node, Columns):
+            found.extend(f for column in node.columns for f in figures(column.children))
+        elif isinstance(node, PlacedFigure):
+            found.append(node)
+    return found
 
 
 def test_vertical_page_reads_right_to_left() -> None:
@@ -104,12 +121,50 @@ def test_after_structure_photos_still_pair_with_their_steps() -> None:
         assert order[index - 1] == "[図]", f"{step} should follow its photo"
 
 
-def test_wide_figures_are_centred_and_narrow_ones_float_to_their_side() -> None:
+def test_wide_pictures_are_centred_and_narrow_ones_float_to_their_side() -> None:
     text = block("本文", 0, 0, 1000, 50, vertical=False)
     wide, left, right = Box(0, 100, 900, 400), Box(0, 500, 400, 800), Box(600, 900, 1000, 1200)
-    figures = [e for e in arrange([text], [wide, left, right]) if isinstance(e, PlacedFigure)]
-    assert [(f.align, f.width_ratio) for f in figures] == [
+    assert [(f.align, f.width_ratio) for f in figures(arrange([text], [wide, left, right]))] == [
         ("center", 0.9),
         ("left", 0.4),
         ("right", 0.4),
     ]
+
+
+def test_two_text_columns_become_a_row_of_columns() -> None:
+    blocks = [
+        block("見出し", 0, 0, 1000, 60, vertical=False),
+        block("左上", 0, 100, 600, 300, vertical=False),
+        block("左下", 0, 320, 600, 500, vertical=False),
+        block("右", 700, 100, 1000, 500, vertical=False),
+    ]
+    heading, row = arrange(blocks, [])
+    assert heading.text == "見出し"
+    assert isinstance(row, Columns)
+    assert [labels(c.children) for c in row.columns] == [["左上", "左下"], ["右"]]
+    assert [c.width_ratio for c in row.columns] == [round(600 / 900, 3), round(300 / 900, 3)]
+
+
+def test_picture_beside_text_floats_instead_of_making_columns() -> None:
+    blocks = [block("説明", 500, 0, 1000, 200, vertical=False)]
+    nodes = arrange(blocks, [Box(0, 0, 400, 300)])
+    assert not any(isinstance(n, Columns) for n in nodes)
+    assert [(f.align) for f in figures(nodes)] == ["left"]
+
+
+def test_vertical_pages_stay_one_column() -> None:
+    blocks = [
+        block("右の段", 700, 0, 760, 500, vertical=True),
+        block("左の段", 0, 0, 60, 500, vertical=True),
+    ]
+    nodes = arrange(blocks, [])
+    assert labels(nodes) == ["右の段", "左の段"]
+    assert not any(isinstance(n, Columns) for n in nodes)
+
+
+def test_how_to_page_keeps_the_tips_sidebar_as_a_column() -> None:
+    blocks, regions = load_page("howto_page_photo.json")
+    nodes = arrange(build_units(blocks, regions), picture_boxes(regions))
+    rows = [n for n in nodes if isinstance(n, Columns)]
+    sidebar_columns = [c for row in rows for c in row.columns if any("豆知識" in l for l in labels(c.children))]
+    assert sidebar_columns, "栽培の豆知識 should sit in its own column"

@@ -37,8 +37,23 @@ function renderParagraph({ text, ruby, role, level }) {
   return node;
 }
 
+// Columns side by side, as on the page: { columns: [{ width_ratio, items }] }.
+function renderColumns({ columns }) {
+  const row = document.createElement("div");
+  row.className = "columns";
+  for (const { width_ratio, items } of columns) {
+    const column = document.createElement("div");
+    column.className = "column";
+    column.style.flexGrow = String(width_ratio);
+    column.append(...items.map(renderItem));
+    row.append(column);
+  }
+  return row;
+}
+
 function renderItem(item) {
   if (item.type === "figure") return renderFigure(item);
+  if (item.type === "columns") return renderColumns(item);
   return renderParagraph(item);
 }
 

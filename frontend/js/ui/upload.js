@@ -4,11 +4,20 @@ function plural(count, word) {
   return `${count} ${word}${count === 1 ? "" : "s"}`;
 }
 
+// Paragraphs and pictures, counting inside columns too.
+function flatten(items) {
+  return items.flatMap((item) =>
+    item.type === "columns" ? item.columns.flatMap((c) => flatten(c.items)) : [item],
+  );
+}
+
 function summary(name, items) {
-  const pictures = items.filter((item) => item.type === "figure").length;
-  const paragraphs = items.length - pictures;
-  const parts = [plural(paragraphs, "paragraph")];
+  const all = flatten(items);
+  const pictures = all.filter((item) => item.type === "figure").length;
+  const parts = [plural(all.length - pictures, "paragraph")];
   if (pictures) parts.push(plural(pictures, "picture"));
+  const columns = items.filter((item) => item.type === "columns").length;
+  if (columns) parts.push(plural(columns, "column row"));
   return `Read ${name}: ${parts.join(", ")}`;
 }
 

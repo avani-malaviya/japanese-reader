@@ -406,3 +406,17 @@
   font-size: var(--caption-size);
   line-height: 1.8;
 }
+
+/* ---- columns recreated from the page ---- */
+.columns {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  clear: both;
+}
+
+.column {
+  flex-basis: 0;
+  min-width: 0;
+  display: flow-root; /* contain floated pictures */
+}

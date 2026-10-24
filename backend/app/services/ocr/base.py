@@ -112,7 +112,31 @@ class FigureItem:
     align: Align
 
 
-PageItem = Paragraph | FigureItem
+@dataclass(frozen=True)
+class ColumnItem:
+    width_ratio: float  # share of the row's width
+    items: list["PageItem"]
+
+
+@dataclass(frozen=True)
+class ColumnsItem:
+    """Columns side by side, as on the page."""
+
+    columns: list[ColumnItem]
+
+
+PageItem = Paragraph | FigureItem | ColumnsItem
+
+
+def walk(items: list[PageItem]) -> list[Paragraph | FigureItem]:
+    """Every paragraph and picture in reading order, columns included."""
+    flat: list[Paragraph | FigureItem] = []
+    for item in items:
+        if isinstance(item, ColumnsItem):
+            flat.extend(walk([i for column in item.columns for i in column.items]))
+        else:
+            flat.append(item)
+    return flat
 
 
 @dataclass(frozen=True)
@@ -123,7 +147,7 @@ class OcrResult:
 
     @property
     def paragraphs(self) -> list[str]:
-        return [item.text for item in self.items if isinstance(item, Paragraph)]
+        return [item.text for item in walk(self.items) if isinstance(item, Paragraph)]
 
     @property
     def text(self) -> str:

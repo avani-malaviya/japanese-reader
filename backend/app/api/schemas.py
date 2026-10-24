@@ -28,7 +28,18 @@ class FigureOut(BaseModel):
     align: Literal["left", "center", "right"]
 
 
-PageItemOut = Annotated[ParagraphOut | FigureOut, Field(discriminator="type")]
+class ColumnOut(BaseModel):
+    width_ratio: float  # share of the row's width
+    items: list["PageItemOut"]
+
+
+class ColumnsOut(BaseModel):
+    type: Literal["columns"] = "columns"
+    columns: list[ColumnOut]
+
+
+PageItemOut = Annotated[ParagraphOut | FigureOut | ColumnsOut, Field(discriminator="type")]
+ColumnOut.model_rebuild()
 
 
 class OcrResponse(BaseModel):

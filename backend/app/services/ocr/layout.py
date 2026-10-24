@@ -1,20 +1,24 @@
-"""Reading order for text blocks and pictures on a page.
+"""Reading order and layout for text blocks and pictures on a page.
 
-Vertical pages (縦書き) read in tiers from top to bottom, and within a tier from right to left.
-Horizontal pages (横書き) read in columns from left to right, and within a column top to bottom.
-The page's orientation is whichever text orientation covers more block area.
+The page is cut recursively at its widest empty gap (XY-cut): across into bands read top to
+bottom, or down into columns read left to right (right to left for 縦書き). The cuts form a tree,
+and on horizontal pages column cuts are kept as side-by-side columns in the document, so sidebars,
+multi-column text and headers beside text keep their arrangement.
 
-Pictures take part in the ordering like text blocks. Text found inside a picture (a sign in a
-photo, a label) is kept and placed right after that picture.
+Vertical pages are flattened into one column: once 縦書き is turned horizontal, its columns are just
+lines. A single picture beside text is not made a column either; it floats on its side and the text
+wraps around it.
+
+Text found inside a picture (a sign in a photo, a label) is kept and placed right after it.
 """
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import TypeVar
+from typing import Union
 
 from app.services.ocr.base import Align, Box, TextBlock
 
-# A picture wider than this share of the content is centred; narrower ones float to a side.
+# A picture wider than this share of its column is centred; narrower ones float to a side.
 CENTER_ABOVE_RATIO = 0.6
 MIN_WIDTH_RATIO = 0.25
 # Cut into bands unless the column gutter is clearly wider: the gap between a photo and the
@@ -31,12 +35,33 @@ OVERLAP_TOLERANCE = 0.15
 @dataclass(frozen=True)
 class PlacedFigure:
     box: Box
-    width_ratio: float
+    width_ratio: float  # share of the width of the column (or page) it sits in
     align: Align
 
 
-Element = TextBlock | PlacedFigure
-T = TypeVar("T", TextBlock, PlacedFigure, Element)
+@dataclass(frozen=True)
+class Column:
+    width_ratio: float  # share of the row's width
+    children: list["Node"]
+
+
+@dataclass(frozen=True)
+class Columns:
+    columns: list[Column]
+
+
+Node = Union[TextBlock, PlacedFigure, Columns]
+
+
+@dataclass(frozen=True)
+class _Picture:
+    """A picture during cutting, before it knows which column it will be placed in."""
+
+    box: Box
+    captions: tuple[TextBlock, ...] = ()
+
+
+_Element = Union[TextBlock, _Picture]
 
 
 def is_vertical_page(blocks: list[TextBlock]) -> bool:
@@ -45,13 +70,15 @@ def is_vertical_page(blocks: list[TextBlock]) -> bool:
     return vertical > 0 and vertical >= horizontal
 
 
-def _split(blocks: list[T], span: Callable[[T], tuple[float, float]]) -> tuple[list[list[T]], float]:
+def _split(
+    blocks: list[_Element], span: Callable[[_Element], tuple[float, float]]
+) -> tuple[list[list[_Element]], float]:
     """Cut blocks in two at the widest empty gap along one axis. Returns the pieces in axis
     order and the gap's width; one piece and 0 if there is no gap.
 
     Cutting only at the widest gap (not at every gap) lets a wide gutter, such as the one before
     a sidebar, be cut first, so narrower gaps inside the main column are judged on their own."""
-    groups: list[list[T]] = []
+    groups: list[list[_Element]] = []
     gaps: list[float] = []
     group_end = float("-inf")
     for block in sorted(blocks, key=lambda b: span(b)[0]):
@@ -71,75 +98,117 @@ def _split(blocks: list[T], span: Callable[[T], tuple[float, float]]) -> tuple[l
     return [flatten(groups[:cut]), flatten(groups[cut:])], gaps[cut - 1]
 
 
-def order_blocks(blocks: list[T], vertical: bool) -> list[T]:
-    """Recursive XY-cut: split the page at its widest empty gap, across or down, and read the
-    pieces in order (bands top to bottom; columns left to right, or right to left for 縦書き).
-    Headers spanning several columns, sidebars and pictures beside text each stay together."""
-    if len(blocks) <= 1:
-        return list(blocks)
+def _extent(elements: list[_Element]) -> Box:
+    return Box.union([e.box for e in elements])
 
-    bands, band_gap = _split(blocks, lambda b: (b.box.y1, b.box.y2))
-    columns, column_gap = _split(blocks, lambda b: (b.box.x1, b.box.x2))
+
+def place_figure(box: Box, container: Box, side: Align | None = None) -> PlacedFigure:
+    """Size a picture relative to its container; float it to `side`, or the side it is on."""
+    ratio = min(1.0, max(MIN_WIDTH_RATIO, box.width / container.width)) if container.width else 1.0
+    if side is None:
+        if ratio > CENTER_ABOVE_RATIO:
+            side = "center"
+        else:
+            side = "left" if box.center[0] < container.center[0] else "right"
+    return PlacedFigure(box=box, width_ratio=round(ratio, 3), align=side)
+
+
+def _build(elements: list[_Element], vertical: bool, container: Box) -> list[Node]:
+    """Recursive XY-cut. `container` is the column (or page) the elements are placed in."""
+    if len(elements) == 1:
+        return _emit(elements[0], vertical, container)
+
+    bands, band_gap = _split(elements, lambda b: (b.box.y1, b.box.y2))
+    columns, column_gap = _split(elements, lambda b: (b.box.x1, b.box.x2))
     if vertical:
         columns.reverse()
 
-    width = max(b.box.x2 for b in blocks) - min(b.box.x1 for b in blocks)
+    width = _extent(elements).width
     narrow_gutter = column_gap < MIN_GUTTER_RATIO * width
     # A column of pictures beside a column of text is a list of rows: each picture belongs to
     # the text next to it (how-to steps, product listings), so read row by row.
     pictures_beside_text = len(columns) > 1 and any(
-        all(isinstance(b, PlacedFigure) for b in piece) for piece in columns
+        all(isinstance(b, _Picture) for b in piece) for piece in columns
     )
     if len(bands) > 1 and (
         narrow_gutter or pictures_beside_text or band_gap * BAND_PREFERENCE >= column_gap
     ):
-        pieces = bands
-    elif len(columns) > 1:
-        pieces = columns
-    else:
+        return [node for band in bands for node in _build(band, vertical, container)]
+
+    if len(columns) <= 1:
         # Overlapping blocks with no clean gap: fall back to plain reading direction.
         key = (lambda b: -b.box.x2) if vertical else (lambda b: b.box.y1)
-        return sorted(blocks, key=key)
-    return [b for piece in pieces for b in order_blocks(piece, vertical)]
+        return [node for e in sorted(elements, key=key) for node in _emit(e, vertical, container)]
+
+    if vertical:
+        return [node for piece in columns for node in _build(piece, vertical, container)]
+
+    # One picture beside text: float it on its side and let the text wrap.
+    for index, piece in enumerate(columns):
+        if len(piece) == 1 and isinstance(piece[0], _Picture):
+            side: Align = "left" if index == 0 else "right"
+            other = columns[1 - index]
+            picture = piece[0]
+            return [
+                place_figure(picture.box, container, side),
+                *_captions(picture, vertical, container),
+                *_build(other, vertical, container),
+            ]
+
+    return [_row(columns, vertical)]
 
 
-def place_figure(box: Box, content: Box) -> PlacedFigure:
-    ratio = min(1.0, max(MIN_WIDTH_RATIO, box.width / content.width)) if content.width else 1.0
-    if ratio > CENTER_ABOVE_RATIO:
-        align: Align = "center"
-    else:
-        align = "left" if box.center[0] < content.center[0] else "right"
-    return PlacedFigure(box=box, width_ratio=round(ratio, 3), align=align)
+def _row(pieces: list[list[_Element]], vertical: bool) -> Columns:
+    widths = [_extent(piece).width for piece in pieces]
+    total = sum(widths) or 1.0
+    columns: list[Column] = []
+    for piece, width in zip(pieces, widths):
+        share = width / total
+        children = _build(piece, vertical, _extent(piece))
+        # A column that is itself just a row of columns joins this row.
+        if len(children) == 1 and isinstance(children[0], Columns):
+            columns.extend(
+                Column(round(share * c.width_ratio, 3), c.children) for c in children[0].columns
+            )
+        else:
+            columns.append(Column(round(share, 3), children))
+    return Columns(columns)
 
 
-def _content_box(boxes: list[Box]) -> Box:
-    return Box(
-        min(b.x1 for b in boxes),
-        min(b.y1 for b in boxes),
-        max(b.x2 for b in boxes),
-        max(b.y2 for b in boxes),
-    )
+def _captions(picture: _Picture, vertical: bool, container: Box) -> list[Node]:
+    if not picture.captions:
+        return []
+    inner = list(picture.captions)
+    return _flatten(_build(inner, is_vertical_page(inner), container))
 
 
-def arrange(blocks: list[TextBlock], figures: list[Box]) -> list[Element]:
-    """Text blocks and pictures in reading order, with placement info for each picture."""
-    if not figures:
-        return list(order_blocks(blocks, is_vertical_page(blocks)))
+def _emit(element: _Element, vertical: bool, container: Box) -> list[Node]:
+    if isinstance(element, TextBlock):
+        return [element]
+    return [place_figure(element.box, container), *_captions(element, vertical, container)]
 
-    content = _content_box([b.box for b in blocks] + figures)
-    placed = [place_figure(box, content) for box in figures]
 
-    inside: dict[int, list[TextBlock]] = {i: [] for i in range(len(placed))}
+def _flatten(nodes: list[Node]) -> list[Node]:
+    flat: list[Node] = []
+    for node in nodes:
+        if isinstance(node, Columns):
+            flat.extend(n for column in node.columns for n in _flatten(column.children))
+        else:
+            flat.append(node)
+    return flat
+
+
+def arrange(blocks: list[TextBlock], figures: list[Box]) -> list[Node]:
+    """The page as a tree of text blocks, placed pictures and rows of columns, in reading order."""
+    if not blocks and not figures:
+        return []
+    captions: dict[int, list[TextBlock]] = {i: [] for i in range(len(figures))}
     outside: list[TextBlock] = []
     for block in blocks:
-        owner = next((i for i, f in enumerate(placed) if f.box.contains(block.box.center)), None)
-        (outside if owner is None else inside[owner]).append(block)
+        owner = next((i for i, f in enumerate(figures) if f.contains(block.box.center)), None)
+        (outside if owner is None else captions[owner]).append(block)
 
+    pictures = [_Picture(box, tuple(captions[i])) for i, box in enumerate(figures)]
+    elements: list[_Element] = [*outside, *pictures]
     vertical = is_vertical_page(blocks)
-    arranged: list[Element] = []
-    for element in order_blocks([*outside, *placed], vertical):
-        arranged.append(element)
-        if isinstance(element, PlacedFigure):
-            caption_blocks = inside[placed.index(element)]
-            arranged.extend(order_blocks(caption_blocks, is_vertical_page(caption_blocks)))
-    return arranged
+    return _build(elements, vertical, _extent(elements))
