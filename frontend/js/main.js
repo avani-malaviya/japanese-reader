@@ -10,6 +10,7 @@ const status = createStatusbar({
 
 const editor = createEditor(document.getElementById("document"), {
   onChange: () => updateCount(),
+  onSaveFailed: () => status.set("Not saved: document too large for browser storage"),
 });
 
 function updateCount() {

@@ -1,5 +1,17 @@
 import { ocrImage } from "../api.js";
 
+function plural(count, word) {
+  return `${count} ${word}${count === 1 ? "" : "s"}`;
+}
+
+function summary(name, items) {
+  const pictures = items.filter((item) => item.type === "figure").length;
+  const paragraphs = items.length - pictures;
+  const parts = [plural(paragraphs, "paragraph")];
+  if (pictures) parts.push(plural(pictures, "picture"));
+  return `Read ${name}: ${parts.join(", ")}`;
+}
+
 export function setupUpload({ button, input, editor, status }) {
   button.addEventListener("click", () => input.click());
 
@@ -17,7 +29,7 @@ export function setupUpload({ button, input, editor, status }) {
     try {
       const { items } = await ocrImage(file);
       editor.setItems(items);
-      status.set(items.length ? `Read ${file.name}` : `No text found in ${file.name}`);
+      status.set(items.length ? summary(file.name, items) : `Nothing found in ${file.name}`);
     } catch (error) {
       status.set(`Error: ${error.message}`);
     } finally {
