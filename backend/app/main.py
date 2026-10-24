@@ -1,8 +1,9 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.types import Scope
 
 from app.api import health, lookup, ocr
+from app.build import build_id
 from app.config import APP_NAME, APP_VERSION, FRONTEND_DIR
 
 
@@ -18,6 +19,14 @@ class FrontendFiles(StaticFiles):
 
 def create_app() -> FastAPI:
     app = FastAPI(title=APP_NAME, version=APP_VERSION)
+
+    @app.middleware("http")
+    async def stamp_build(request: Request, call_next):
+        response = await call_next(request)
+        if request.url.path.startswith("/api"):
+            response.headers["X-App-Build"] = build_id()
+        return response
+
     app.include_router(health.router, prefix="/api")
     app.include_router(ocr.router, prefix="/api")
     app.include_router(lookup.router, prefix="/api")

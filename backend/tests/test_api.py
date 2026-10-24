@@ -55,6 +55,12 @@ def test_health(client: TestClient) -> None:
     assert response.json()["status"] == "ok"
 
 
+def test_api_responses_carry_the_build(client: TestClient) -> None:
+    first = client.get("/api/health").headers["x-app-build"]
+    assert first and client.get("/api/health").headers["x-app-build"] == first
+    assert "x-app-build" not in client.get("/").headers
+
+
 def test_serves_frontend(client: TestClient) -> None:
     response = client.get("/")
     assert response.status_code == 200

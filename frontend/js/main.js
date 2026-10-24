@@ -1,3 +1,4 @@
+import { startSession } from "./api.js";
 import { createEditor } from "./editor/editor.js";
 import { setupFigureControls } from "./ui/figure-controls.js";
 import { setupLookupPopup } from "./ui/lookup-popup.js";
@@ -44,5 +45,6 @@ setupFigureControls({
   status,
 });
 
+startSession();
 updateCount();
 status.set("Ready");
