@@ -175,10 +175,10 @@ export function createEditor(el, { onChange, onSave }) {
     changed,
     hasContent,
 
-    // Plain text without furigana (<rt>), for counting and lookups.
+    // The page's own text: without furigana or notes (both <rt> or .note-line).
     getText() {
       const clone = el.cloneNode(true);
-      clone.querySelectorAll("rt").forEach((rt) => rt.remove());
+      clone.querySelectorAll("rt, .note-line").forEach((node) => node.remove());
       return clone.innerText.trim();
     },
   };

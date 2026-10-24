@@ -3,6 +3,8 @@
   --ink: #000;
   --paper: #fff;
   --muted: #808080;
+  /* The reader's own notes: the one colour allowed on the document page. */
+  --note: #d0021b;
 
   --font-ui: "Osaka-Mono", "MS Gothic", Menlo, Monaco, "Courier New", monospace;
   --font-doc: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "MS Mincho", serif;
@@ -14,6 +16,7 @@
   --h1-size: 34px;
   --h2-size: 26px;
   --caption-size: 14px;
+  --note-line-size: 16px;
   --popup-word-size: 20px;
   --popup-kana-size: 18px;
 

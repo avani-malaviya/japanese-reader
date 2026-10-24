@@ -1,15 +1,16 @@
 // The box that appears beside highlighted text: readings, and actions on them.
 
 import { getMeaning, getReadings } from "../api.js";
-import { FURIGANA_OCCURRENCES, POPUP_GAP } from "../config.js";
+import { FURIGANA_OCCURRENCES } from "../config.js";
 import { insertFurigana, removeFurigana } from "../editor/furigana.js";
 import { getSelectionInfo } from "../editor/selection.js";
 import { el } from "./dom.js";
 import { renderMeaning } from "./meaning-view.js";
+import { placeBeside } from "./place.js";
 
 const GROUP_LABELS = { word: "読み READING", on: "音 ON", kun: "訓 KUN" };
 
-export function setupLookupPopup({ editor, scroller, status, onAskAI }) {
+export function setupLookupPopup({ editor, scroller, status, onAskAI, onNote, onOpenNote }) {
   const popup = el("div", "popup");
   popup.hidden = true;
   popup.setAttribute("role", "dialog");
@@ -25,24 +26,6 @@ export function setupLookupPopup({ editor, scroller, status, onAskAI }) {
     requestId++;
   }
 
-  // Beside the selection if there is room, otherwise below it. Never on top of it.
-  function place(rect) {
-    const { innerWidth, innerHeight } = window;
-    const width = popup.offsetWidth;
-    const height = popup.offsetHeight;
-    let left = rect.right + POPUP_GAP;
-    let top = rect.top;
-    if (left + width > innerWidth) {
-      left = Math.max(POPUP_GAP, Math.min(rect.left, innerWidth - width - POPUP_GAP));
-      top = rect.bottom + POPUP_GAP;
-    }
-    if (top + height > innerHeight) {
-      top = Math.max(POPUP_GAP, rect.top - height - POPUP_GAP);
-    }
-    popup.style.left = `${left}px`;
-    popup.style.top = `${top}px`;
-  }
-
   function render(...sections) {
     const header = el("div", "popup__title");
     header.append(el("span", "popup__word", current.info.text));
@@ -54,7 +37,7 @@ export function setupLookupPopup({ editor, scroller, status, onAskAI }) {
 
     popup.replaceChildren(header, ...sections);
     popup.hidden = false;
-    place(current.info.rect);
+    placeBeside(popup, current.info.rect);
   }
 
   function renderReadings() {
@@ -123,7 +106,12 @@ export function setupLookupPopup({ editor, scroller, status, onAskAI }) {
       close();
       onAskAI(info);
     });
-    actions.append(insert, meaning, askAI);
+    const note = actionButton("Note", "Write your own note under this, in red", () => {
+      const { info } = current;
+      close();
+      onNote(info);
+    });
+    actions.append(insert, meaning, askAI, note);
 
     if (current.ruby) {
       actions.append(
@@ -191,8 +179,10 @@ export function setupLookupPopup({ editor, scroller, status, onAskAI }) {
     if (info) open(info);
   }
 
-  // A plain click on furigana selects its word and opens the popup with Remove options.
+  // A plain click on a note opens it for editing; on furigana, selects its word and opens the
+  // popup with Remove options.
   function onClick(event) {
+    if (window.getSelection().isCollapsed && onOpenNote(event.target)) return;
     const ruby = event.target.closest("ruby");
     if (!ruby || !window.getSelection().isCollapsed) return onSelectionDone();
     const range = document.createRange();

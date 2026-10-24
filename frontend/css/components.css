@@ -485,3 +485,44 @@
 .ask-ai__notice[hidden] {
   display: none;
 }
+
+/* ---- the reader's notes (red) ---- */
+/* The note hangs under the word without widening it, so the word's characters stay together. */
+.page .note-word {
+  position: relative;
+}
+
+.page .note-word > rt {
+  position: absolute;
+  left: 0;
+  top: 100%;
+  color: var(--note);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.page .noted {
+  text-decoration: underline 1px var(--note);
+  text-underline-offset: 0.3em;
+}
+
+.page .note-line {
+  margin: -0.5em 0 1em;
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--note);
+  color: var(--note);
+  font-size: var(--note-line-size);
+  line-height: 1.7;
+  cursor: pointer;
+}
+
+.page .note-word,
+.page .noted {
+  cursor: pointer;
+}
+
+.note-popup__field {
+  color: var(--note);
+  font-family: var(--font-doc);
+  font-size: var(--note-line-size);
+}

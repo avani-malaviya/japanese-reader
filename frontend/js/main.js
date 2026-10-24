@@ -8,6 +8,7 @@ import { setupAiChatButton } from "./ui/ai-chat-button.js";
 import { setupAskAiDialog } from "./ui/ask-ai-dialog.js";
 import { setupFigureControls } from "./ui/figure-controls.js";
 import { setupLookupPopup } from "./ui/lookup-popup.js";
+import { setupNotePopup } from "./ui/note-popup.js";
 import { createStatusbar } from "./ui/statusbar.js";
 import { setupUpload } from "./ui/upload.js";
 
@@ -44,11 +45,15 @@ setupUpload({
 const askAi = setupAskAiDialog({ status });
 setupAiChatButton({ button: document.getElementById("ai-chat"), status });
 
+const notes = setupNotePopup({ editor, scroller: document.querySelector(".workspace"), status });
+
 const lookup = setupLookupPopup({
   editor,
   scroller: document.querySelector(".workspace"),
   status,
   onAskAI: askAi.open,
+  onNote: notes.openNew,
+  onOpenNote: notes.openExisting,
 });
 
 const figures = setupFigureControls({
@@ -62,6 +67,7 @@ const desktop = setupDesktopScreen({ root: document.getElementById("desktop") })
 async function showRoute(route) {
   // Floating boxes belong to the editor; don't leave them over the desktop.
   lookup.close();
+  notes.close();
   askAi.close();
   figures.deselect();
   if (route.name === "document") {

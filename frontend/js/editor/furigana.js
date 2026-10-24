@@ -1,7 +1,8 @@
 // Furigana: <ruby>漢字<rt>かんじ</rt></ruby>, shown under the text (see css).
 
+// Already annotated, or the reader's own note text: never gets furigana.
 function isAnnotated(node) {
-  return Boolean(node.parentElement.closest("ruby"));
+  return Boolean(node.parentElement.closest("ruby, .note-line"));
 }
 
 // Occurrences of `text` that sit inside one text node, in document order.
@@ -68,7 +69,7 @@ function readingOf(ruby) {
 /** Removes furigana from `ruby`, or with `everywhere`, from every same word + reading. */
 export function removeFurigana(root, ruby, { everywhere = false } = {}) {
   const matches = everywhere
-    ? [...root.querySelectorAll("ruby")].filter(
+    ? [...root.querySelectorAll("ruby:not(.note-word)")].filter(
         (other) => baseText(other) === baseText(ruby) && readingOf(other) === readingOf(ruby),
       )
     : [ruby];
