@@ -1,9 +1,10 @@
 import base64
+from dataclasses import asdict
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
-from app.api.schemas import FigureOut, OcrResponse, PageItemOut, ParagraphOut
+from app.api.schemas import FigureOut, OcrResponse, PageItemOut, ParagraphOut, RubyOut
 from app.config import MAX_UPLOAD_BYTES
 from app.services.figures.base import FigureDetector
 from app.services.figures.doclayout_detector import get_detector
@@ -24,7 +25,7 @@ def figure_detector() -> FigureDetector:
 
 def to_out(item: PageItem) -> PageItemOut:
     if isinstance(item, Paragraph):
-        return ParagraphOut(text=item.text)
+        return ParagraphOut(text=item.text, ruby=[RubyOut(**asdict(r)) for r in item.ruby])
     src = "data:image/png;base64," + base64.b64encode(item.png).decode("ascii")
     return FigureOut(src=src, width_ratio=item.width_ratio, align=item.align)
 

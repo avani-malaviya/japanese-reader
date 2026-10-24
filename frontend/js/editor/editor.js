@@ -1,6 +1,7 @@
 // Owns the document element: blocks (<p>, <figure>, page breaks), editable, autosaved.
 
 import { AUTOSAVE_DELAY_MS } from "../config.js";
+import { createRuby } from "./furigana.js";
 import { loadDocument, saveDocument } from "./storage.js";
 
 // A picture is one uneditable unit in the text flow: Backspace deletes it whole.
@@ -16,10 +17,21 @@ function renderFigure({ src, width_ratio, align }) {
   return figure;
 }
 
+// Text with furigana read off the page ({ start, end, kana }) as <ruby>, like inserted ones.
+function renderText(parent, text, ruby = []) {
+  let position = 0;
+  for (const { start, end, kana } of [...ruby].sort((a, b) => a.start - b.start)) {
+    if (start < position) continue; // overlapping furigana: keep the first
+    parent.append(text.slice(position, start), createRuby(text.slice(start, end), kana));
+    position = end;
+  }
+  parent.append(text.slice(position));
+}
+
 function renderItem(item) {
   if (item.type === "figure") return renderFigure(item);
   const p = document.createElement("p");
-  p.textContent = item.text;
+  renderText(p, item.text, item.ruby);
   return p;
 }
 

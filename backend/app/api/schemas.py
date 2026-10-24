@@ -5,9 +5,18 @@ from pydantic import BaseModel, Field
 from app.config import MAX_CONTEXT_CHARS, MAX_LOOKUP_CHARS
 
 
+class RubyOut(BaseModel):
+    """Furigana over text[start:end]."""
+
+    start: int
+    end: int
+    kana: str
+
+
 class ParagraphOut(BaseModel):
     type: Literal["paragraph"] = "paragraph"
     text: str
+    ruby: list[RubyOut] = []
 
 
 class FigureOut(BaseModel):

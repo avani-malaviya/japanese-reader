@@ -42,12 +42,25 @@ class Box:
 
 
 @dataclass(frozen=True)
+class Ruby:
+    """Furigana over text[start:end]."""
+
+    start: int
+    end: int
+    kana: str
+
+    def shifted(self, offset: int) -> "Ruby":
+        return Ruby(self.start + offset, self.end + offset, self.kana)
+
+
+@dataclass(frozen=True)
 class TextLine:
     text: str
     box: Box
     # Size across the line (height of a horizontal line, width of a vertical one), measured on
     # the engine's rotated quad so skewed photos don't inflate it.
     thickness: float
+    ruby: tuple[Ruby, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -62,12 +75,23 @@ class TextBlock:
     @property
     def text(self) -> str:
         # Japanese has no spaces between words, so wrapped lines join directly.
-        return "".join(line.text.strip() for line in self.lines)
+        return "".join(line.text for line in self.lines)
+
+    @property
+    def ruby(self) -> tuple[Ruby, ...]:
+        """Each line's furigana, with offsets into `text`."""
+        found: list[Ruby] = []
+        offset = 0
+        for line in self.lines:
+            found.extend(r.shifted(offset) for r in line.ruby)
+            offset += len(line.text)
+        return tuple(found)
 
 
 @dataclass(frozen=True)
 class Paragraph:
     text: str
+    ruby: tuple[Ruby, ...] = ()
 
 
 Align = Literal["left", "center", "right"]

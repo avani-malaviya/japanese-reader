@@ -38,7 +38,8 @@ def _line(text: str, quad: list[list[float]]) -> TextLine:
     xs = [x for x, _ in quad]
     ys = [y for _, y in quad]
     sides = [math.dist(quad[i], quad[(i + 1) % 4]) for i in range(4)]
-    return TextLine(text=text, box=Box(min(xs), min(ys), max(xs), max(ys)), thickness=min(sides))
+    box = Box(min(xs), min(ys), max(xs), max(ys))
+    return TextLine(text=text.strip(), box=box, thickness=min(sides))
 
 
 _engine: MokuroEngine | None = None

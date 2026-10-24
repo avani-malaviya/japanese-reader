@@ -48,7 +48,7 @@ def test_orientation_follows_dominant_area() -> None:
 
 
 def test_lines_join_into_one_horizontal_paragraph() -> None:
-    vertical = block_of([line("日本語を ", 5, 0, 10, 10, True), line("読む。", 0, 0, 5, 10, True)], True)
+    vertical = block_of([line("日本語を", 5, 0, 10, 10, True), line("読む。", 0, 0, 5, 10, True)], True)
     assert vertical.text == "日本語を読む。"
 
 

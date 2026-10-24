@@ -65,7 +65,10 @@ def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
     response = client.post("/api/ocr", files={"image": ("page.png", image_bytes(), "image/png")})
     assert response.status_code == 200
     assert response.json() == {
-        "items": [{"type": "paragraph", "text": "一番目"}, {"type": "paragraph", "text": "二番目"}],
+        "items": [
+            {"type": "paragraph", "text": "一番目", "ruby": []},
+            {"type": "paragraph", "text": "二番目", "ruby": []},
+        ],
         "text": "一番目\n\n二番目",
     }
 

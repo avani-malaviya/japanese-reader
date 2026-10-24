@@ -5,6 +5,7 @@ from pillow_heif import register_heif_opener
 
 from app.services.figures.base import FigureDetector
 from app.services.images import to_dithered_png
+from app.services.ocr import furigana
 from app.services.ocr.base import FigureItem, OcrEngine, OcrResult, PageItem, Paragraph
 from app.services.ocr.layout import PlacedFigure, arrange
 
@@ -29,10 +30,11 @@ def decode_image(data: bytes) -> Image.Image:
 def read_page(engine: OcrEngine, detector: FigureDetector, data: bytes) -> OcrResult:
     image = decode_image(data)
     items: list[PageItem] = []
-    for element in arrange(engine.read_blocks(image), detector.detect(image)):
+    blocks = furigana.extract(engine.read_blocks(image))
+    for element in arrange(blocks, detector.detect(image)):
         if isinstance(element, PlacedFigure):
             png = to_dithered_png(image, element.box)
             items.append(FigureItem(png=png, width_ratio=element.width_ratio, align=element.align))
         elif element.text:
-            items.append(Paragraph(element.text))
+            items.append(Paragraph(element.text, element.ruby))
     return OcrResult(items=items)
