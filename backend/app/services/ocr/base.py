@@ -16,8 +16,12 @@ class Box:
         return max(0.0, self.x2 - self.x1)
 
     @property
+    def height(self) -> float:
+        return max(0.0, self.y2 - self.y1)
+
+    @property
     def area(self) -> float:
-        return self.width * max(0.0, self.y2 - self.y1)
+        return self.width * self.height
 
     @property
     def center(self) -> tuple[float, float]:
@@ -27,6 +31,24 @@ class Box:
         x, y = point
         return self.x1 <= x <= self.x2 and self.y1 <= y <= self.y2
 
+    @staticmethod
+    def union(boxes: "list[Box]") -> "Box":
+        return Box(
+            min(b.x1 for b in boxes),
+            min(b.y1 for b in boxes),
+            max(b.x2 for b in boxes),
+            max(b.y2 for b in boxes),
+        )
+
+
+@dataclass(frozen=True)
+class TextLine:
+    text: str
+    box: Box
+    # Size across the line (height of a horizontal line, width of a vertical one), measured on
+    # the engine's rotated quad so skewed photos don't inflate it.
+    thickness: float
+
 
 @dataclass(frozen=True)
 class TextBlock:
@@ -34,12 +56,13 @@ class TextBlock:
 
     box: Box
     vertical: bool
-    lines: list[str] = field(default_factory=list)
+    lines: list[TextLine] = field(default_factory=list)
+    font_size: float = 0.0
 
     @property
     def text(self) -> str:
         # Japanese has no spaces between words, so wrapped lines join directly.
-        return "".join(line.strip() for line in self.lines)
+        return "".join(line.text.strip() for line in self.lines)
 
 
 @dataclass(frozen=True)

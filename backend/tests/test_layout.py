@@ -1,14 +1,11 @@
 import json
 from pathlib import Path
 
-from app.services.ocr.base import Box, TextBlock
+from app.services.ocr.base import Box
 from app.services.ocr.layout import PlacedFigure, arrange, is_vertical_page
+from tests.factories import block, block_of, line
 
 FIXTURES = Path(__file__).parent / "fixtures"
-
-
-def block(text: str, x1: float, y1: float, x2: float, y2: float, vertical: bool) -> TextBlock:
-    return TextBlock(box=Box(x1, y1, x2, y2), vertical=vertical, lines=[text])
 
 
 def labels(elements: list) -> list[str]:
@@ -51,7 +48,7 @@ def test_orientation_follows_dominant_area() -> None:
 
 
 def test_lines_join_into_one_horizontal_paragraph() -> None:
-    vertical = TextBlock(box=Box(0, 0, 10, 10), vertical=True, lines=["日本語を ", "読む。"])
+    vertical = block_of([line("日本語を ", 5, 0, 10, 10, True), line("読む。", 0, 0, 5, 10, True)], True)
     assert vertical.text == "日本語を読む。"
 
 
@@ -92,7 +89,7 @@ def test_skewed_phone_photo_of_a_how_to_page() -> None:
     # Boxes detected on a real phone photo (slightly skewed) of a gardening book page:
     # five step photos, each with its text to the right, and two sidebars further right.
     data = json.loads((FIXTURES / "howto_page_photo_boxes.json").read_text())
-    blocks = [TextBlock(Box(*b[:4]), vertical=b[4], lines=[b[5]]) for b in data["blocks"]]
+    blocks = [block(b[5], *b[:4], vertical=b[4]) for b in data["blocks"]]
     order = labels(arrange(blocks, [Box(*f) for f in data["figures"]]))
     steps = ["ラッカセイは肥料が多すぎ", "１ヶ所に対して２粒のタネ", "本葉が２枚程度になったタ", "花が咲きはじめたら、子房"]
     for step in steps:

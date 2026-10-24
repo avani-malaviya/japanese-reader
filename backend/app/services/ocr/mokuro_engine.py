@@ -1,12 +1,13 @@
 """comic-text-detector + manga-ocr, via mokuro's page pipeline. See docs/decisions/0001."""
 
 import io
+import math
 import threading
 
 from PIL import Image
 
 from app.services.inference import gpu_lock
-from app.services.ocr.base import Box, TextBlock
+from app.services.ocr.base import Box, TextBlock, TextLine
 
 
 class MokuroEngine:
@@ -23,9 +24,21 @@ class MokuroEngine:
         with gpu_lock:
             result = self._ocr(buffer)
         return [
-            TextBlock(box=Box(*block["box"]), vertical=bool(block["vertical"]), lines=block["lines"])
+            TextBlock(
+                box=Box(*block["box"]),
+                vertical=bool(block["vertical"]),
+                lines=[_line(text, quad) for text, quad in zip(block["lines"], block["lines_coords"])],
+                font_size=float(block["font_size"]),
+            )
             for block in result["blocks"]
         ]
+
+
+def _line(text: str, quad: list[list[float]]) -> TextLine:
+    xs = [x for x, _ in quad]
+    ys = [y for _, y in quad]
+    sides = [math.dist(quad[i], quad[(i + 1) % 4]) for i in range(4)]
+    return TextLine(text=text, box=Box(min(xs), min(ys), max(xs), max(ys)), thickness=min(sides))
 
 
 _engine: MokuroEngine | None = None

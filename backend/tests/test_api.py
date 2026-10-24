@@ -8,13 +8,14 @@ from PIL import Image
 from app.api.ocr import figure_detector, ocr_engine
 from app.main import create_app
 from app.services.ocr.base import Box, TextBlock
+from tests.factories import block, block_of, line
 
 
 class FakeOcrEngine:
     def read_blocks(self, image: Image.Image) -> list[TextBlock]:
         return [
-            TextBlock(box=Box(0, 0, 10, 100), vertical=True, lines=["二番目"]),
-            TextBlock(box=Box(50, 0, 60, 100), vertical=True, lines=["一番", "目"]),
+            block("二番目", 0, 0, 10, 100, vertical=True),
+            block_of([line("一番", 55, 0, 60, 100, True), line("目", 50, 0, 55, 100, True)], True),
         ]
 
 
