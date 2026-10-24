@@ -2,7 +2,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from app.config import MAX_CONTEXT_CHARS, MAX_LOOKUP_CHARS
+from app.config import MAX_CONTEXT_CHARS, MAX_LOOKUP_CHARS, MAX_NAME_CHARS
 
 
 class RubyOut(BaseModel):
@@ -85,3 +85,45 @@ class MeaningResponse(BaseModel):
     text: str
     looked_up: str
     entries: list[EntryOut]
+
+
+# ---- library ----
+
+Name = Annotated[str, Field(min_length=1, max_length=MAX_NAME_CHARS)]
+
+
+class FolderIn(BaseModel):
+    name: Name
+
+
+class FolderOut(BaseModel):
+    id: int
+    name: str
+    created_at: str
+    document_count: int
+    updated_at: str
+
+
+class DocumentIn(BaseModel):
+    title: Name
+
+
+class DocumentContentIn(BaseModel):
+    html: str
+
+
+class DocumentPatch(BaseModel):
+    title: Name | None = None
+    folder_id: int | None = None
+
+
+class DocumentSummaryOut(BaseModel):
+    id: int
+    folder_id: int
+    title: str
+    created_at: str
+    updated_at: str
+
+
+class DocumentOut(DocumentSummaryOut):
+    html: str

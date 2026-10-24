@@ -2,9 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.types import Scope
 
-from app.api import health, lookup, ocr
+from app.api import health, library, lookup, ocr
 from app.build import build_id
 from app.config import APP_NAME, APP_VERSION, FRONTEND_DIR
+from app.services.library import NotFoundError
 
 
 class FrontendFiles(StaticFiles):
@@ -30,6 +31,8 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix="/api")
     app.include_router(ocr.router, prefix="/api")
     app.include_router(lookup.router, prefix="/api")
+    app.include_router(library.router, prefix="/api")
+    app.add_exception_handler(NotFoundError, library.not_found_handler)
     # Mounted last so /api routes take precedence over static files.
     app.mount("/", FrontendFiles(directory=FRONTEND_DIR, html=True), name="frontend")
     return app
