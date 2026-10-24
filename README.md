@@ -18,9 +18,11 @@ Everything runs locally and uses only open-source models and open data.
 
 | Feature | What it does |
 |---|---|
-| **Open image** | Upload a photo/scan from your computer. |
-| **OCR** | Detects text blocks (vertical *or* horizontal) and recognises them. Vertical text is converted to horizontal so every document reads the same way. One block → one paragraph. |
-| **Pictures** | Photos and illustrations on the page are cut out, dithered to pure black and white, and placed where they sat in the reading order: wide ones centred, narrow ones floated left/right with text wrapping around. Text inside a picture follows it as normal paragraphs. Delete a picture with Backspace. |
+| **Open image** | Upload a photo/scan from your computer. Each new page is **added at the cursor** (after a dashed page break), so press Enter at the end and open the next page. **[ NEW ]** starts over. |
+| **OCR** | Detects text (vertical *or* horizontal) and recognises it. Vertical text is converted to horizontal so every document reads the same way. |
+| **Page structure** | The page is recreated in one house style: the page title becomes a heading, subtitles become subheadings, captions are styled as captions, and **columns and sidebars stay side by side**. Page furniture (page numbers, margin tabs, running headers) is left out. |
+| **Printed furigana** | Furigana printed on the page become real furigana on the right kanji, instead of stray lines of kana. |
+| **Pictures** | Photos and illustrations are cut out, dithered to pure black and white, and placed where they sat: wide ones centred, narrow ones floated beside their text. Click a picture to **align** it (◧ ▣ ◨), **resize** it (corner handle), **move** it (drag; a bar shows where it lands, columns included) or **delete** it. Text inside a picture follows it as normal paragraphs. |
 | **Editor** | The OCR result lands in a simple word-processor page. Fix mistakes, delete noise, type freely. Paste is always plain text. Autosaved in the browser. |
 | **Reading** | Highlight text → a box appears beside it with the reading in hiragana. A single kanji shows *all* its readings (音 / 訓); a word shows its dictionary readings with the one that fits the sentence marked `◆ in context`. |
 | **Insert** | Adds the chosen reading as furigana *below* the selected text and the occurrences after it (5 in total). |
@@ -30,7 +32,8 @@ Everything runs locally and uses only open-source models and open data.
 ## Using it
 
 1. **[ OPEN IMAGE… ]** → pick a photo. The status bar shows progress; the first read of a session
-   takes ~30 s while models load, then ~1–3 s per page.
+   takes ~30 s while models load, then a few seconds per page. For a multi-page text, put the
+   cursor at the end (or press Enter there) and open the next page.
 2. Fix anything the OCR got wrong directly on the page.
 3. Highlight a word or a single kanji. In the box beside it:
    - click a reading to choose it, then **[ INSERT ]** to add it as furigana;
@@ -99,7 +102,9 @@ backend/                     uv project (Python 3.12)
   app/main.py                create_app(): API routers + static frontend
   app/config.py              limits and settings
   app/api/                   HTTP layer: ocr.py, lookup.py, schemas.py, health.py
-  app/services/ocr/          base.py (OcrEngine interface), mokuro_engine.py, layout.py, service.py
+  app/services/ocr/          base.py (OcrEngine interface), mokuro_engine.py, service.py (pipeline),
+                             furigana.py (printed ruby), structure.py (headings, captions, furniture),
+                             layout.py (XY-cut reading order → columns tree)
   app/services/regions/      base.py (LayoutDetector interface), doclayout_detector.py
   app/services/images.py     crop + 1-bit dither pictures
   app/services/reading.py    readings for a selection
@@ -158,7 +163,11 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
   readings are always listed so you can choose.
 - One document at a time, stored in this browser only. Pictures are stored inside it, so a
   page with many large pictures can exceed browser storage (the status bar says so).
-- Picture placement approximates the page (order, width, side), not exact positions.
+- Layout is a structural recreation (order, headings, columns, picture size and side), not exact
+  positions. Heading detection relies on the layout model plus text size; unusual designs can
+  produce a missed or extra heading, which you can retype as normal text.
+- Printed furigana are only recovered when the OCR reads them; very small ruby is sometimes missed.
+- Columns are recreated on horizontal pages only; vertical pages become a single column.
 
 ## Roadmap
 
@@ -175,6 +184,13 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
 - [x] Selection popup with readings
 - [x] Insert furigana under the next 5 occurrences; click to remove
 - [x] Meaning lookup and `/api/meaning`
+
+**v0.2 (done)**
+
+- [x] Pictures: detect, dither, place; select, align, resize, move
+- [x] Multi-page documents: new pages added at the cursor
+- [x] Printed furigana → ruby
+- [x] Page structure: headings, captions, page furniture, columns
 
 **Later ideas**
 

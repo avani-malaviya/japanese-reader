@@ -29,10 +29,22 @@ plain utilitarian chrome around it.
   under the line and reads like an e-reader.
 - Furigana (`<rt>`) sits **under** the text (`ruby-position: under`), smaller, same ink colour.
 
+### Document house style
+Every page, whatever it looked like, is recreated with the same small set of styles:
+- **h1** page title: large bold Mincho, `3px double` rule under it.
+- **h2** subtitle: bold Mincho, `1px` rule under it.
+- **caption**: small UI font.
+- **body**: Mincho, as the page.
+- **columns**: side by side with a gap, no borders. Pictures float within their column.
+- **page break** between uploaded pages: a dashed rule.
+Don't add per-document fonts, sizes or colours; structure is what carries over from the page.
+
 ### Layout
 - One window: title bar → toolbar → page → status bar.
 - The page is centred, ~40em wide max, generous margins. Nothing competes with it.
 - Popups float beside the selection, never cover it.
+- Editing controls (picture frame, handles, toolbars) are overlays outside the editable page,
+  so they can never end up saved in a document.
 
 ### Motion & feedback
 - No animations or transitions. State changes are instant.
