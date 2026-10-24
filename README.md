@@ -29,6 +29,7 @@ Everything runs locally and uses only open-source models and open data.
 | **Insert** | Adds the chosen reading as furigana *below* the selected text and the occurrences after it (5 in total). |
 | **Remove** | Click any furigana → **Remove** (just that one) or **Remove all** (same word + reading everywhere). |
 | **Meaning** | Shows dictionary entries (part of speech + glosses) for the selection. Inflected words (話しました) are looked up by dictionary form (話す). Word-level only — no sentence translation, on purpose. |
+| **Notes** | Highlight a word or line → **[ NOTE ]** and type your own note. It appears in **red**: right under a word for short selections, or on a red line under the paragraph (with the text underlined) for longer ones. Click a note to edit or delete it. Notes are saved with the document and never get furigana. |
 | **Ask AI** | Sends the highlighted text and its sentence to **your own ChatGPT or Claude account** with a saved grammar template: dictionary form and meaning, conjugation type and rules, the pattern and how it attaches to nouns / i-adjectives / na-adjectives / verbs, examples. Edit the template once (**Save as default**), or add a note per question. The answer opens in a floating window over the app; **[ AI CHAT ]** brings it back. No API keys; nothing is sent until you press Send. |
 
 ## Using it

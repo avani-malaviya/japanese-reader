@@ -26,7 +26,9 @@ Never mix them: no pastel in the editor, no plain black-and-white chrome on the 
 - Icons are 16×16 pixel drawings (`js/desktop/icons.js`) coloured only through `.px-*` classes.
 
 ### Document colour
-- Only `--ink` (`#000`) and `--paper` (`#fff`). One grey, `--muted` (`#808080`), for disabled
+- Only `--ink` (`#000`) and `--paper` (`#fff`), plus **one exception: `--note` red, used only for
+  the reader's own notes** (note text, the underline of noted text, the note line's rule), so
+  what the reader wrote never looks like the page. One grey, `--muted` (`#808080`), for disabled
   or secondary text only.
 - No other colours, no smooth gradients, no transparency effects, no blur.
 - 1-bit patterns are fine (striped title bar, dithered desktop) — built with hard-stop CSS
