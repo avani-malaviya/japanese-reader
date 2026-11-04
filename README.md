@@ -218,6 +218,8 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
 - [x] Library: folders and documents saved on the server (SQLite)
 - [x] Retro pastel desktop landing page, folder windows, dialogs
 
+**Going public** (accounts, hosting, phone app, camera): see [docs/PRODUCTION_PLAN.md](docs/PRODUCTION_PLAN.md).
+
 **Next on the desktop**: writing tool, kanji tool, opening several documents as windows.
 
 **Later ideas**
