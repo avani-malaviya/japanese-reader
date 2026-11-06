@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.types import Scope
 
+from app.access import configured_password, password_gate
 from app.api import health, library, lookup, ocr
 from app.build import build_id
 from app.config import APP_NAME, APP_VERSION, FRONTEND_DIR
@@ -18,7 +19,7 @@ class FrontendFiles(StaticFiles):
         return response
 
 
-def create_app() -> FastAPI:
+def create_app(password: str | None = None) -> FastAPI:
     app = FastAPI(title=APP_NAME, version=APP_VERSION)
 
     @app.middleware("http")
@@ -27,6 +28,10 @@ def create_app() -> FastAPI:
         if request.url.path.startswith("/api"):
             response.headers["X-App-Build"] = build_id()
         return response
+
+    # Added last, so it runs first: nothing is served without the password.
+    if password:
+        app.middleware("http")(password_gate(password))
 
     app.include_router(health.router, prefix="/api")
     app.include_router(ocr.router, prefix="/api")
@@ -38,4 +43,4 @@ def create_app() -> FastAPI:
     return app
 
 
-app = create_app()
+app = create_app(password=configured_password())
