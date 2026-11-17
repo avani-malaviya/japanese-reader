@@ -1,18 +1,15 @@
 """An optional password for the whole app, for sharing a running copy over a public link.
 
-Set READER_PASSWORD to turn it on. The browser asks once (HTTP Basic: any user name, this
-password) and then sends it with every request, so the frontend needs no changes.
+Set READER_PASSWORD (see app/config.py) to turn it on. The browser asks once (HTTP Basic: any
+user name, this password) and then sends it with every request, so the frontend needs no changes.
 """
 
 import base64
 import binascii
-import os
 import secrets
 
 from fastapi import Request
 from fastapi.responses import Response
-
-PASSWORD_ENV = "READER_PASSWORD"
 
 
 def _password_from(header: str) -> str | None:
@@ -41,6 +38,3 @@ def password_gate(password: str):
 
     return gate
 
-
-def configured_password() -> str | None:
-    return os.environ.get(PASSWORD_ENV) or None

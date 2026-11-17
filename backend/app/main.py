@@ -2,10 +2,10 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from starlette.types import Scope
 
-from app.access import configured_password, password_gate
+from app.access import password_gate
 from app.api import health, library, lookup, ocr
 from app.build import build_id
-from app.config import APP_NAME, APP_VERSION, FRONTEND_DIR
+from app.config import APP_NAME, APP_VERSION, FRONTEND_DIR, get_settings
 from app.services.library import NotFoundError
 
 
@@ -43,4 +43,4 @@ def create_app(password: str | None = None) -> FastAPI:
     return app
 
 
-app = create_app(password=configured_password())
+app = create_app(password=get_settings().reader_password)

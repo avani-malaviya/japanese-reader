@@ -14,7 +14,7 @@ from app.api.schemas import (
     FolderIn,
     FolderOut,
 )
-from app.config import LIBRARY_DB
+from app.config import get_settings
 from app.services.library import LibraryStore, NotFoundError
 
 router = APIRouter()
@@ -22,7 +22,7 @@ router = APIRouter()
 
 @cache
 def library_store() -> LibraryStore:
-    return LibraryStore(LIBRARY_DB)
+    return LibraryStore(get_settings().library_db)
 
 
 Store = Annotated[LibraryStore, Depends(library_store)]
