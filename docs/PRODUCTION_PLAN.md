@@ -4,8 +4,11 @@ How to turn the local prototype into a real website and phone app: people sign i
 email, their library follows them between phone and computer, and they can photograph pages
 with the camera.
 
-Status: **proposal** · 2026-11-04. Each phase ends in a working, deployable state.
-Decisions still open are listed at the end; the plan states a recommended default for each.
+Status: **accepted** · 2026-11-04, decisions taken 2026-11-17 (§9). Each phase ends in a
+working, deployable state.
+
+The first launch is **personal use at €0/month**: the app runs on a free Hugging Face Space and
+keeps its data in Supabase's free tier. The paid-server setup (§2.3b) is kept for when it grows.
 
 ---
 
@@ -17,7 +20,7 @@ Decisions still open are listed at the end; the plan states a recommended defaul
 | Data | SQLite file `backend/data/library.sqlite` | Postgres |
 | Pictures | `data:` URIs inside each document's HTML | files in object storage, documents reference them by id |
 | OCR | synchronous request, models in the API process, `gpu_lock` | job queue + separate worker process |
-| Hosting | `uvicorn` on a Mac, `localhost:8000` | Docker on a server, HTTPS, CI/CD, backups, monitoring |
+| Hosting | `uvicorn` on a Mac, `localhost:8000` | one Docker image: a free Hugging Face Space first, a VPS later; CI/CD, backups |
 | Clients | desktop browser, mouse-driven | responsive website → installable PWA → optional iOS/Android apps |
 | Camera | file picker only | phone camera capture, later an in-app page scanner |
 
@@ -45,8 +48,11 @@ Decisions still open are listed at the end; the plan states a recommended defaul
 - **Supabase** for Postgres + Auth + Storage, on the free tier first. One provider covers three
   needs, it is plain Postgres underneath (no lock-in on the data), and it runs locally with
   `supabase start` for development. The API keeps owning all logic; Supabase is infrastructure.
-- **Hetzner VPS** (or similar) with 16 GB RAM for the API + worker, Docker Compose, Caddy for
-  automatic HTTPS. Move the worker to a GPU machine only if page times hurt.
+- **A Hugging Face Docker Space** (free CPU: 2 vCPU, 16 GB RAM, HTTPS at `….hf.space`) runs the
+  one image: API, frontend and OCR worker. It keeps no state, so it can sleep and rebuild
+  freely. Later the same image moves to a VPS (Hetzner, 16 GB) with Caddy, and the worker to a
+  GPU machine only if page times hurt. The diagram above is that later shape; on the Space,
+  FastAPI serves the frontend itself and the worker is a thread in the same process.
 - **A jobs table in Postgres** (`SELECT … FOR UPDATE SKIP LOCKED`) instead of Redis: one less
   service, and jobs survive restarts.
 - **Capacitor** for the store apps: it wraps the same vanilla-JS frontend, no rewrite.
@@ -61,14 +67,15 @@ Goal: the app is configured by environment, runs in containers, and is tested on
    `Settings` class: `DATABASE_URL`, `STORAGE_*`, `AUTH_JWT_*`, `ALLOWED_ORIGINS`,
    `OCR_DAILY_QUOTA`, `ENV` (`dev`/`test`/`prod`). Constants that are product rules
    (`MAX_LOOKUP_CHARS`…) stay as constants.
-2. **Containers.** One `backend/Dockerfile` (uv, Python 3.12, model weights downloaded at build
-   time into the image so containers start without network); `compose.yaml` with `api`,
-   `worker`, `caddy`. `frontend/` is served by Caddy as static files.
+2. **Container.** One `Dockerfile` at the repository root (uv, Python 3.12, model weights
+   downloaded at build time into the image so it starts without network), serving the API and
+   `frontend/` on `$PORT` (7860 on Hugging Face). `compose.yaml` runs it locally.
 3. **CI.** GitHub Actions: `ruff` + `pytest` on every push, with a Postgres service container.
    Playwright smoke tests (the drivers used during development, turned into a `tests/e2e/`
    suite) on the main branch.
-4. **Licence decision** (blocking for going public, see §7): AGPL for the whole app, or swap
-   DocLayout-YOLO for a permissively licensed layout model.
+4. **Licence: AGPL-3.0** (decided). `LICENSE` at the root, the third-party licences listed in
+   the README, and a "Source" link in the app, since the AGPL asks a network service to offer
+   its source to its users.
 
 Done when: `docker compose up` serves the current app; CI is green.
 
@@ -162,7 +169,22 @@ Goal: the site is live on a domain over HTTPS, and OCR is reliable under real us
 - The browser downsizes photos before upload (longest side 3000 px, JPEG ~0.85), which cuts
   12-MP phone photos from ~4 MB to ~600 KB without hurting OCR.
 
-### 2.3 Deployment
+### 2.3a Deployment: Hugging Face Space (first launch)
+- **Space:** a Docker Space built from the repository's `Dockerfile`; its README front matter
+  sets `sdk: docker` and `app_port: 7860`. Secrets (Supabase URL and keys) are Space secrets.
+- **Worker:** a background thread started with the app, claiming jobs from the same
+  `ocr_jobs` table, so the code is the one a separate worker process will run later.
+- **No local state:** documents and pictures live in Supabase, so the Space's lost disk on
+  restart doesn't matter.
+- **CI/CD:** on a version tag, GitHub Actions pushes the commit to the Space's git remote, and
+  Hugging Face builds and restarts it.
+- **Known limits:** the free Space sleeps after ~48 h unused (the next visit waits a minute or
+  two while it wakes); Supabase's free project pauses after a week unused; OCR runs on CPU
+  (time it here before deciding anything else).
+- **Backups:** a weekly `pg_dump` and storage export run by a scheduled GitHub Action into a
+  private place you choose; restore rehearsed once.
+
+### 2.3b Deployment: own server (later)
 - **Server:** 16 GB RAM VPS. `compose.yaml`: `caddy` (TLS, static frontend, proxy `/api`),
   `api` (2 uvicorn workers), `worker` (1 process). Models baked into the image.
 - **CI/CD:** on a version tag, GitHub Actions builds the image, pushes it to a registry, and
@@ -175,8 +197,8 @@ Goal: the site is live on a domain over HTTPS, and OCR is reliable under real us
 - **Security headers** in Caddy: HSTS, a Content-Security-Policy that allows only our origin,
   the pinned CDN, Supabase, and `chatgpt.com`/`claude.ai` for the Ask AI window.
 
-Done when: the site runs at its domain, a page photo goes through the queue in production,
-backups exist, and errors reach Sentry.
+Done when: the site runs on the Space, a page photo goes through the queue there, backups
+exist, and errors reach Sentry.
 
 ---
 
@@ -261,6 +283,10 @@ website.
 
 ## 6. Costs (starting scale)
 
+First launch (personal): **€0**, Hugging Face Space free CPU + Supabase free tier, no domain.
+
+Later, at starting public scale:
+
 | Item | Monthly |
 |---|---|
 | VPS, 16 GB RAM (API + worker) | ~€30–60 |
@@ -279,7 +305,7 @@ chosen server in Phase 2 before deciding on a GPU.
 
 | Risk | Handling |
 |---|---|
-| **AGPL (DocLayout-YOLO)**: serving it publicly obliges publishing the app's source under AGPL | Decide in Phase 0: open-source the app under AGPL, or replace the model with a permissively licensed layout model (evaluate e.g. PaddleOCR's layout models) |
+| **AGPL (DocLayout-YOLO)**: serving it publicly obliges publishing the app's source under AGPL | Decided: the app is AGPL-3.0 and links to its source |
 | GPL comic-text-detector | Fine on the server; never bundle it in the phone apps (OCR stays server-side) |
 | Dictionary licences (JMdict / KANJIDIC, CC BY-SA, EDRDG) | Attribution page in the app and README |
 | Users photograph copyrighted books | Terms: personal study use; documents are private; no sharing feature |
@@ -301,14 +327,11 @@ chosen server in Phase 2 before deciding on a GPU.
 
 These are planning estimates, not measurements; Phase 1 and 3 carry the most uncertainty.
 
-## 9. Decisions needed from you
+## 9. Decisions (2026-11-17)
 
-1. **Licence:** open-source the app (AGPL) **or** replace DocLayout-YOLO. *Default: replace it,
-   unless open-sourcing appeals.*
-2. **Auth/data provider:** Supabase **or** fully self-hosted (Postgres + MinIO + own magic-link
-   emails). *Default: Supabase.*
-3. **Server:** Hetzner (EU, cheapest) or a managed platform (Fly.io / Render, simpler, pricier).
-   *Default: Hetzner.*
-4. **Name and domain** for the public site.
-5. **Store apps:** needed at launch, or PWA first? *Default: PWA first, stores in Phase 4.*
-6. **Budget ceiling** for compute, which decides CPU vs GPU OCR.
+1. **Licence:** open-source the app under **AGPL-3.0**, keeping DocLayout-YOLO.
+2. **Auth/data provider:** **Supabase** (free tier).
+3. **Hosting:** a free **Hugging Face Docker Space** for the first, personal launch; a VPS later.
+4. **Name and domain:** not needed for a personal launch; the Space's `….hf.space` address.
+5. **Store apps:** **PWA first**, store apps in Phase 4.
+6. **Budget:** **€0/month** for now, so OCR runs on the Space's CPU.
