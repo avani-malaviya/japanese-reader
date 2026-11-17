@@ -1,0 +1,14 @@
+# The production image, locally: docker compose up --build, then http://localhost:8000
+services:
+  app:
+    build: .
+    ports:
+      - "8000:7860"
+    environment:
+      LIBRARY_DB: /home/user/data/library.sqlite
+      READER_PASSWORD: ${READER_PASSWORD:-}
+    volumes:
+      - library:/home/user/data
+
+volumes:
+  library:

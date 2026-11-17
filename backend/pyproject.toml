@@ -17,6 +17,9 @@ dependencies = [
     "doclayout-yolo>=0.0.4",
     "huggingface-hub>=2.3.0",
     "pydantic-settings>=2.6",
+    # Pulled in by mokuro and doclayout-yolo; listed so Linux can take the CPU-only builds.
+    "torch>=2.14,<2.15",
+    "torchvision>=0.29,<0.30",
 ]
 
 [dependency-groups]
@@ -28,6 +31,17 @@ dev = [
 
 [tool.uv]
 package = false
+
+# On Linux (the container) torch comes without CUDA: the Space has no GPU, and the CUDA
+# libraries would add several GB to the image. macOS keeps the default build (MPS).
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+torchvision = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
