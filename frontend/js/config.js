@@ -2,8 +2,8 @@ export const AUTOSAVE_DELAY_MS = 500;
 
 // Where the app's source code is published. The app is AGPL-3.0, which asks a copy served
 // over the network to offer its source to the people using it: the desktop links here.
-// Empty until the repository is published.
-export const SOURCE_URL = "";
+// Empty hides the button.
+export const SOURCE_URL = "https://github.com/avani-malaviya/japanese-reader";
 
 // Keep in sync with MAX_LOOKUP_CHARS in backend/app/config.py.
 export const MAX_LOOKUP_CHARS = 50;
