@@ -47,8 +47,7 @@ def _kanji_readings(kanji: str, in_context: str, standalone: bool) -> list[Readi
         return readings
     # The kanji is a whole word here (e.g. 生 read as なま), so mark the reading that fits.
     marked = [
-        Reading(r.kana, r.label, r.kind, contextual=True) if r.kana == in_context else r
-        for r in readings
+        Reading(r.kana, r.label, r.kind, contextual=True) if r.kana == in_context else r for r in readings
     ]
     if not any(r.contextual for r in marked):
         marked.insert(0, Reading(kana=in_context, label=in_context, kind="word", contextual=True))

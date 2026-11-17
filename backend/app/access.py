@@ -37,4 +37,3 @@ def password_gate(password: str):
         return await call_next(request)
 
     return gate
-

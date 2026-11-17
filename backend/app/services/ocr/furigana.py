@@ -68,11 +68,7 @@ def _kanji_run_at(text: str, position: float) -> tuple[int, int] | None:
 
 def extract(blocks: list[TextBlock]) -> list[TextBlock]:
     """Moves printed furigana onto the text they annotate. Blocks left empty are dropped."""
-    refs = [
-        _Ref(bi, li, block.vertical)
-        for bi, block in enumerate(blocks)
-        for li in range(len(block.lines))
-    ]
+    refs = [_Ref(bi, li, block.vertical) for bi, block in enumerate(blocks) for li in range(len(block.lines))]
     line_at = {(r.block, r.line): blocks[r.block].lines[r.line] for r in refs}
 
     found: dict[tuple[int, int], dict[tuple[int, int], list[tuple[float, str]]]] = {}

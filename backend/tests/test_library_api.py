@@ -18,7 +18,8 @@ def client(tmp_path: Path) -> TestClient:
 
 def test_folder_and_document_lifecycle(client: TestClient) -> None:
     folder = client.post("/api/folders", json={"name": "Pamphlets"}).json()
-    assert client.patch(f"/api/folders/{folder['id']}", json={"name": "パンフレット"}).json()["name"] == "パンフレット"
+    renamed = client.patch(f"/api/folders/{folder['id']}", json={"name": "パンフレット"}).json()
+    assert renamed["name"] == "パンフレット"
 
     document = client.post(f"/api/folders/{folder['id']}/documents", json={"title": "Zoo"}).json()
     assert document["html"] == ""

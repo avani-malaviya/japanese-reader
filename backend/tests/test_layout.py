@@ -95,7 +95,13 @@ def test_how_to_page_pairs_each_photo_with_its_step_and_keeps_sidebar_together()
     ]
     photo1, photo2, chart = Box(0, 100, 340, 300), Box(0, 350, 340, 550), Box(0, 700, 1000, 900)
     assert labels(arrange(blocks, [photo1, photo2, chart])) == [
-        "見出し", "[図]", "手順1", "[図]", "手順2", "豆知識", "[図]",
+        "見出し",
+        "[図]",
+        "手順1",
+        "[図]",
+        "手順2",
+        "豆知識",
+        "[図]",
     ]
 
 
@@ -166,5 +172,7 @@ def test_how_to_page_keeps_the_tips_sidebar_as_a_column() -> None:
     blocks, regions = load_page("howto_page_photo.json")
     nodes = arrange(build_units(blocks, regions), picture_boxes(regions))
     rows = [n for n in nodes if isinstance(n, Columns)]
-    sidebar_columns = [c for row in rows for c in row.columns if any("豆知識" in l for l in labels(c.children))]
+    sidebar_columns = [
+        c for row in rows for c in row.columns if any("豆知識" in label for label in labels(c.children))
+    ]
     assert sidebar_columns, "栽培の豆知識 should sit in its own column"

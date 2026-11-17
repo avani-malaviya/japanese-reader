@@ -27,7 +27,10 @@ class MokuroEngine:
             TextBlock(
                 box=Box(*block["box"]),
                 vertical=bool(block["vertical"]),
-                lines=[_line(text, quad) for text, quad in zip(block["lines"], block["lines_coords"])],
+                lines=[
+                    _line(text, quad)
+                    for text, quad in zip(block["lines"], block["lines_coords"], strict=True)
+                ],
                 font_size=float(block["font_size"]),
             )
             for block in result["blocks"]

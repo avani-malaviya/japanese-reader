@@ -55,8 +55,7 @@ def _split(block: TextBlock, regions: list[Region]) -> list[tuple[RegionKind | N
         else:
             runs.append((kind, [line]))
     return [
-        (kind, replace(block, lines=lines, box=Box.union([l.box for l in lines])))
-        for kind, lines in runs
+        (kind, replace(block, lines=lines, box=Box.union([ln.box for ln in lines]))) for kind, lines in runs
     ]
 
 
@@ -90,6 +89,4 @@ def _promote_title(units: list[TextBlock], body: float) -> list[TextBlock]:
     if not sizes or max(sizes) < TITLE_SIZE_RATIO * body:
         return units
     threshold = max(sizes) * SAME_LEVEL_RATIO
-    return [
-        replace(u, level=1) if u.role == "heading" and _size(u) >= threshold else u for u in units
-    ]
+    return [replace(u, level=1) if u.role == "heading" and _size(u) >= threshold else u for u in units]

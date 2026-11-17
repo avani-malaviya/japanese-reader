@@ -49,7 +49,10 @@ def test_long_text_is_never_a_size_heading() -> None:
 
 
 def test_caption_region() -> None:
-    blocks = [block("図１　畑の様子", 0, 500, 300, 530, vertical=False), block(BODY, 0, 0, 800, 40, vertical=False)]
+    blocks = [
+        block("図１　畑の様子", 0, 500, 300, 530, vertical=False),
+        block(BODY, 0, 0, 800, 40, vertical=False),
+    ]
     regions = [Region(Box(0, 490, 320, 540), "caption", 0.7)]
     assert build_units(blocks, regions)[0].role == "caption"
 

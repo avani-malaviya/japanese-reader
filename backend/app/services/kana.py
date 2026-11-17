@@ -4,8 +4,7 @@ _KANA_OFFSET = ord("ァ") - ord("ぁ")
 
 def to_hiragana(text: str) -> str:
     return "".join(
-        chr(ord(ch) - _KANA_OFFSET) if _KATAKANA_START <= ord(ch) <= _KATAKANA_END else ch
-        for ch in text
+        chr(ord(ch) - _KANA_OFFSET) if _KATAKANA_START <= ord(ch) <= _KATAKANA_END else ch for ch in text
     )
 
 

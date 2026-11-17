@@ -82,9 +82,7 @@ def test_ocr_returns_paragraphs_in_reading_order(client: TestClient) -> None:
 
 def test_ocr_returns_figures_as_dithered_png(app: FastAPI) -> None:
     app.dependency_overrides[layout_detector] = OneFigure
-    response = TestClient(app).post(
-        "/api/ocr", files={"image": ("page.png", image_bytes(), "image/png")}
-    )
+    response = TestClient(app).post("/api/ocr", files={"image": ("page.png", image_bytes(), "image/png")})
     items = response.json()["items"]
     # Vertical page, read right to left: 一番目 (x≈55), picture (x≈10), 二番目 (x≈5).
     assert [item["type"] for item in items] == ["paragraph", "figure", "paragraph"]

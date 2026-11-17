@@ -14,11 +14,11 @@ from app.api.schemas import (
     RubyOut,
 )
 from app.config import MAX_UPLOAD_BYTES
-from app.services.regions.base import LayoutDetector
-from app.services.regions.doclayout_detector import get_detector
 from app.services.ocr.base import ColumnsItem, OcrEngine, PageItem, Paragraph
 from app.services.ocr.mokuro_engine import get_engine
 from app.services.ocr.service import InvalidImageError, read_page
+from app.services.regions.base import LayoutDetector
+from app.services.regions.doclayout_detector import get_detector
 
 router = APIRouter()
 
@@ -35,8 +35,7 @@ def to_out(item: PageItem) -> PageItemOut:
     if isinstance(item, ColumnsItem):
         return ColumnsOut(
             columns=[
-                ColumnOut(width_ratio=c.width_ratio, items=[to_out(i) for i in c.items])
-                for c in item.columns
+                ColumnOut(width_ratio=c.width_ratio, items=[to_out(i) for i in c.items]) for c in item.columns
             ]
         )
     if isinstance(item, Paragraph):

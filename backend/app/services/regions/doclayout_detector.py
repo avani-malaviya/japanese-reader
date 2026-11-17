@@ -67,7 +67,9 @@ class DocLayoutDetector:
             )[0]
         min_picture_area = image.width * image.height * MIN_PICTURE_AREA_RATIO
         regions: list[Region] = []
-        detections = zip(result.boxes.xyxy.tolist(), result.boxes.cls.tolist(), result.boxes.conf.tolist())
+        detections = zip(
+            result.boxes.xyxy.tolist(), result.boxes.cls.tolist(), result.boxes.conf.tolist(), strict=True
+        )
         for coords, cls, score in sorted(detections, key=lambda d: -d[2]):
             kind = KINDS.get(self._model.names[int(cls)])
             box = Box(*coords)

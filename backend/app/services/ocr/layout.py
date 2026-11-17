@@ -14,7 +14,6 @@ Text found inside a picture (a sign in a photo, a label) is kept and placed righ
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Union
 
 from app.services.ocr.base import Align, Box, TextBlock
 
@@ -50,7 +49,7 @@ class Columns:
     columns: list[Column]
 
 
-Node = Union[TextBlock, PlacedFigure, Columns]
+Node = TextBlock | PlacedFigure | Columns
 
 
 @dataclass(frozen=True)
@@ -61,7 +60,7 @@ class _Picture:
     captions: tuple[TextBlock, ...] = ()
 
 
-_Element = Union[TextBlock, _Picture]
+_Element = TextBlock | _Picture
 
 
 def is_vertical_page(blocks: list[TextBlock]) -> bool:
@@ -130,9 +129,7 @@ def _build(elements: list[_Element], vertical: bool, container: Box) -> list[Nod
     pictures_beside_text = len(columns) > 1 and any(
         all(isinstance(b, _Picture) for b in piece) for piece in columns
     )
-    if len(bands) > 1 and (
-        narrow_gutter or pictures_beside_text or band_gap * BAND_PREFERENCE >= column_gap
-    ):
+    if len(bands) > 1 and (narrow_gutter or pictures_beside_text or band_gap * BAND_PREFERENCE >= column_gap):
         return [node for band in bands for node in _build(band, vertical, container)]
 
     if len(columns) <= 1:
@@ -162,14 +159,12 @@ def _row(pieces: list[list[_Element]], vertical: bool) -> Columns:
     widths = [_extent(piece).width for piece in pieces]
     total = sum(widths) or 1.0
     columns: list[Column] = []
-    for piece, width in zip(pieces, widths):
+    for piece, width in zip(pieces, widths, strict=True):
         share = width / total
         children = _build(piece, vertical, _extent(piece))
         # A column that is itself just a row of columns joins this row.
         if len(children) == 1 and isinstance(children[0], Columns):
-            columns.extend(
-                Column(round(share * c.width_ratio, 3), c.children) for c in children[0].columns
-            )
+            columns.extend(Column(round(share * c.width_ratio, 3), c.children) for c in children[0].columns)
         else:
             columns.append(Column(round(share, 3), children))
     return Columns(columns)

@@ -26,7 +26,7 @@ def block(
 
 def block_of(lines: list[TextLine], vertical: bool, font_size: float = 40) -> TextBlock:
     return TextBlock(
-        box=Box.union([l.box for l in lines]), vertical=vertical, lines=lines, font_size=font_size
+        box=Box.union([ln.box for ln in lines]), vertical=vertical, lines=lines, font_size=font_size
     )
 
 
@@ -38,7 +38,7 @@ def load_page(name: str) -> tuple[list[TextBlock], list[Region]]:
             box=Box(*b["box"]),
             vertical=b["vertical"],
             font_size=b["font_size"],
-            lines=[TextLine(l["text"], Box(*l["box"]), l["thickness"]) for l in b["lines"]],
+            lines=[TextLine(ln["text"], Box(*ln["box"]), ln["thickness"]) for ln in b["lines"]],
         )
         for b in data["blocks"]
     ]
