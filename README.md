@@ -106,12 +106,18 @@ Why these: see [docs/decisions/](docs/decisions/).
 
 ```
 README.md                    this file — design, plan, how to run
+LICENSE                      AGPL-3.0
+Dockerfile, compose.yaml     the production image, and running it locally
+scripts/smoke.sh             end-to-end check of a running copy (health, lookup, real OCR)
+.github/workflows/ci.yml     lint + tests on every push; image build + smoke test
 docs/DESIGN_RULES.md         visual + code rules every change should follow
 docs/decisions/              short architecture decision records (ADRs)
 
 backend/                     uv project (Python 3.12)
   app/main.py                create_app(): API routers + static frontend
-  app/config.py              limits and settings
+  app/config.py              product limits (constants) and machine settings (environment)
+  app/access.py              optional whole-app password (READER_PASSWORD)
+  app/prefetch.py            download + load the OCR models (run when building the image)
   app/api/                   HTTP layer: ocr.py, lookup.py, schemas.py, health.py
   app/services/ocr/          base.py (OcrEngine interface), mokuro_engine.py, service.py (pipeline),
                              furigana.py (printed ruby), structure.py (headings, captions, furniture),
@@ -170,7 +176,24 @@ The first OCR request downloads the text-detector and manga-ocr weights into the
 Hugging Face / mokuro caches; after that the app works fully offline. The dictionaries
 (JMdict, KANJIDIC2, UniDic-lite) ship inside Python packages, so lookups never need the network.
 
-**Tests:** `cd backend && uv run pytest`
+**Settings** come from environment variables (or `backend/.env`), see `Settings` in
+`backend/app/config.py`: `ENV`, `LIBRARY_DB`, and `READER_PASSWORD`, which puts the whole app
+behind a browser password prompt when you share it on your network.
+
+**Tests and lint:** `cd backend && uv run pytest && uv run ruff check . && uv run ruff format --check .`
+CI runs the same on every push, then builds the image and runs `scripts/smoke.sh` against it.
+
+### In a container
+
+The `Dockerfile` builds the image used for hosting (see the production plan): CPU-only PyTorch,
+the OCR models baked in, served on port 7860.
+
+```sh
+docker compose up --build          # then open http://localhost:8000
+scripts/smoke.sh http://localhost:8000
+```
+
+The library lives on a Docker volume (`library`) there, separate from `backend/data/`.
 
 ## Known limitations (v0)
 
@@ -220,13 +243,35 @@ Hugging Face / mokuro caches; after that the app works fully offline. The dictio
 
 **Going public** (accounts, hosting, phone app, camera): see [docs/PRODUCTION_PLAN.md](docs/PRODUCTION_PLAN.md).
 
+- [x] Phase 0: settings from the environment, container image, CI, AGPL licence
+
 **Next on the desktop**: writing tool, kanji tool, opening several documents as windows.
 
 **Later ideas**
 
 - Show the source image side-by-side, click a paragraph to see its crop
-- Save multiple documents (SQLite), library screen
 - Vocabulary list from looked-up words, export to Anki
 - Context-aware explanation with a local open-weight LLM (e.g. via Ollama)
 - Book-page-tuned OCR engine (e.g. NDLOCR) as an alternative to the manga detector
 - Vertical reading mode (`writing-mode: vertical-rl`) as a view option
+
+## Licence
+
+Japanese Reader is free software under the **GNU Affero General Public License v3.0**
+([LICENSE](LICENSE)). If you run a modified copy as a service for others, the AGPL asks you to
+offer them its source; the desktop's **Source** button (`SOURCE_URL` in
+`frontend/js/config.js`) is how this app does that.
+
+Third-party models, code and data it relies on:
+
+| Component | Used for | Licence |
+|---|---|---|
+| [DocLayout-YOLO](https://github.com/opendatalab/DocLayout-YOLO) | page layout regions | AGPL-3.0 |
+| [mokuro](https://github.com/kha-white/mokuro) / comic-text-detector | finding text lines | GPL-3.0 |
+| [manga-ocr](https://github.com/kha-white/manga-ocr) | reading text lines | Apache-2.0 |
+| [fugashi](https://github.com/polm/fugashi) + UniDic-lite | word splitting, readings | MIT / BSD-3-Clause |
+| [jamdict](https://github.com/neocl/jamdict) | dictionary access | MIT |
+| [JMdict and KANJIDIC2](https://www.edrdg.org/) (EDRDG) | meanings, kanji readings | CC BY-SA 4.0 |
+
+The dictionary data is the property of the Electronic Dictionary Research and Development
+Group, used in conformance with the Group's licence.

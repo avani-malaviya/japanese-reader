@@ -2,6 +2,7 @@
 
 import { createFolder, deleteFolder, listFolders, renameFolder } from "../api.js";
 import { loadProvider, showChatWindow } from "../ai/handoff.js";
+import { SOURCE_URL } from "../config.js";
 import { el } from "../ui/dom.js";
 import { startClock } from "./clock.js";
 import { alertDialog, confirmDialog, promptDialog } from "./dialogs.js";
@@ -22,7 +23,16 @@ export function setupDesktopScreen({ root }) {
   const newFolderButton = el("button", "desk-btn", "New folder");
   newFolderButton.type = "button";
   const clock = el("span", "desk-menubar__clock");
-  menubar.append(brand, newFolderButton, el("span", "desk-menubar__spacer"), clock);
+  menubar.append(brand, newFolderButton, el("span", "desk-menubar__spacer"));
+  if (SOURCE_URL) {
+    const source = el("a", "desk-btn", "Source");
+    source.href = SOURCE_URL;
+    source.target = "_blank";
+    source.rel = "noopener";
+    source.title = "This app's source code (AGPL-3.0)";
+    menubar.append(source);
+  }
+  menubar.append(clock);
 
   const icons = el("div", "desk-icons");
   icons.setAttribute("role", "listbox");
